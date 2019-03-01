@@ -1,0 +1,8 @@
+{
+  "name": "KeyValue",
+  "type": "record",
+  "fields": [
+    {"name": "key", "type": "bytes"},
+    {"name": "value", "type": "bytes"}
+  ]
+}

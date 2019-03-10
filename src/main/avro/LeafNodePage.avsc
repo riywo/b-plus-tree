@@ -1,0 +1,7 @@
+{
+  "name": "LeafNodePage",
+  "type": "record",
+  "fields": [
+    {"name": "cells", "type": {"type": "array", "items": "LeafNodeCell"} }
+  ]
+}

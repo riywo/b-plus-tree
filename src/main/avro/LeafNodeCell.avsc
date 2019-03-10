@@ -1,0 +1,8 @@
+{
+  "name": "LeafNodeCell",
+  "type": "record",
+  "fields": [
+    {"name": "key", "type": "bytes" },
+    {"name": "value", "type": "bytes" }
+  ]
+}

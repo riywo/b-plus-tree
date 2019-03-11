@@ -8,13 +8,6 @@ import org.apache.avro.io.*
 import LeafNodePage
 import java.io.ByteArrayOutputStream
 
-val schema = SchemaBuilder.builder().record("foo").fields()
-    .name("a").type().stringType().noDefault()
-    .name("b").orderIgnore().type().stringType().noDefault()
-    .endRecord()
-
-val table = Table(schema)
-
 fun LeafNode.records(): List<Table.Record> {
     return pageRecords().map {
         val record = table.Record()
@@ -41,8 +34,19 @@ fun LeafNode.put(record: GenericRecord) {
     put(keyByteBuffer, recordByteBuffer)
 }
 
+fun LeafNode.delete(record: GenericRecord) {
+    val keyByteBuffer = table.key.encode(record)
+    delete(keyByteBuffer)
+}
 
 fun main() {
+    val schema = SchemaBuilder.builder().record("foo").fields()
+        .name("a").type().stringType().noDefault()
+        .name("b").orderIgnore().type().stringType().noDefault()
+        .endRecord()
+
+    val table = Table(schema)
+
     val leafNode = LeafNode.new(table)
     println(leafNode.records())
     println(leafNode.dump().toHexString())

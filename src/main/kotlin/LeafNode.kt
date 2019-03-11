@@ -3,7 +3,7 @@ package com.riywo.ninja.bptree
 import LeafNodePage
 import java.nio.ByteBuffer
 
-class LeafNode(private val table: Table, private val page: LeafNodePage) {
+class LeafNode(val table: Table, private val page: LeafNodePage) {
     companion object {
         fun new(table: Table): LeafNode {
             val page = LeafNodePage(mutableListOf<ByteBuffer>())
@@ -35,14 +35,21 @@ class LeafNode(private val table: Table, private val page: LeafNodePage) {
     fun put(keyByteBuffer: ByteBuffer, recordByteBuffer: ByteBuffer) {
         val result = findKey(keyByteBuffer)
         when(result) {
-            is FindKeyResult.Found -> update(result.putIndex, recordByteBuffer)
-            is FindKeyResult.NotFound -> insert(result.putIndex, recordByteBuffer)
+            is FindKeyResult.Found -> update(result.index, recordByteBuffer)
+            is FindKeyResult.NotFound -> insert(result.lastIndex, recordByteBuffer)
+        }
+    }
+
+    fun delete(keyByteBuffer: ByteBuffer) {
+        val result = findKey(keyByteBuffer)
+        if (result is FindKeyResult.Found) {
+            page.getRecords().removeAt(result.index)
         }
     }
 
     private sealed class FindKeyResult {
-        data class Found(val putIndex: Int, val byteBuffer: ByteBuffer) : FindKeyResult()
-        data class NotFound(val putIndex: Int): FindKeyResult()
+        data class Found(val index: Int, val byteBuffer: ByteBuffer) : FindKeyResult()
+        data class NotFound(val lastIndex: Int): FindKeyResult()
     }
 
     private fun findKey(keyByteBuffer: ByteBuffer): FindKeyResult {
@@ -64,5 +71,20 @@ class LeafNode(private val table: Table, private val page: LeafNodePage) {
 
     private fun update(index: Int, byteBuffer: ByteBuffer) {
         page.getRecords()[index] = byteBuffer
+    }
+
+    override fun hashCode(): Int {
+        return page.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LeafNode
+
+        if (page != other.page) return false
+
+        return true
     }
 }

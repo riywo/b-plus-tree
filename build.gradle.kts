@@ -15,6 +15,7 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.apache.avro:avro:1.8.2")
+
     testCompile("org.junit.jupiter:junit-jupiter-api:5.4.0")
     testCompile("org.junit.jupiter:junit-jupiter-params:5.4.0")
     testCompile("org.assertj:assertj-core:3.11.1")

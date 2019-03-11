@@ -43,6 +43,12 @@ class AvroRecordIO(val schema: Schema) {
         read(record, input)
     }
 
+    fun read(bytes: ByteArray): GenericRecord {
+        val record = GenericData.Record(schema)
+        read(record, bytes)
+        return record
+    }
+
     fun compare(a: ByteArray, b: ByteArray): Int {
         return BinaryData.compare(a, 0 , b, 0, schema)
     }

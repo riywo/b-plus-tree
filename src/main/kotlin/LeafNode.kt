@@ -1,89 +1,108 @@
 package com.riywo.ninja.bptree
 
 import LeafNodePage
-import LeafNodeCell
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.*
 import org.apache.avro.specific.*
-import java.io.ByteArrayOutputStream
+import java.io.*
 import java.nio.ByteBuffer
 
-fun ByteBuffer.toByteArray(): ByteArray {
-    rewind()
-    val bytes = ByteArray(remaining())
-    get(bytes)
-    rewind()
-    return bytes
-}
-
-fun ByteArray.toByteBuffer(): ByteBuffer {
-    return ByteBuffer.wrap(this)
-}
-
 class LeafNode(private val table: Table) {
-    private val page = LeafNodePage(mutableListOf<LeafNodeCell>())
+    companion object {
+        private val reader = SpecificDatumReader<LeafNodePage>(LeafNodePage::class.java)
+        private val writer = SpecificDatumWriter<LeafNodePage>(LeafNodePage::class.java)
+        private val encoderFactory = EncoderFactory.get()
+        private val decoderFactory = DecoderFactory.get()
+        private var encoder: BinaryEncoder? = null
+        private var decoder: BinaryDecoder? = null
+    }
 
-    fun load(pageBytes: ByteArray) {
-        val reader = SpecificDatumReader<LeafNodePage>(LeafNodePage::class.java)
-        val decoder = DecoderFactory.get().binaryDecoder(pageBytes, null)
+    private val page = LeafNodePage(mutableListOf<ByteBuffer>())
+
+    fun load(input: ByteArrayInputStream) {
+        decoder = decoderFactory.binaryDecoder(input, decoder)
         reader.read(page, decoder)
+    }
+
+    fun load(bytes: ByteArray) {
+        val input = ByteArrayInputStream(bytes)
+        load(input)
+    }
+
+    fun dump(output: ByteArrayOutputStream) {
+        encoder = encoderFactory.binaryEncoder(output, encoder)
+        writer.write(page, encoder)
+        encoder?.flush()
     }
 
     fun dump(): ByteArray {
         val output = ByteArrayOutputStream()
-        val writer = SpecificDatumWriter<LeafNodePage>(LeafNodePage::class.java)
-        val encoder = EncoderFactory.get().binaryEncoder(output, null)
-        writer.write(page, encoder)
-        encoder.flush()
+        dump(output)
         return output.toByteArray()
     }
 
-    val keys: List<ByteBuffer>
-        get() = cells().map { it.getKey() }
+    val records: List<Table.Record>
+        get() = page.getRecords().map {
+            val record = table.Record()
+            record.load(it.toByteArray())
+            record
+        }
 
-    fun get(keyBytes: ByteArray): ByteBuffer? {
+    fun get(keyBytes: ByteArray): ByteArray? {
         val result = findKey(keyBytes)
         return when(result) {
-            is FindKeyResult.Found -> result.value
+            is FindKeyResult.Found -> result.bytes
             is FindKeyResult.NotFound -> null
         }
     }
 
-    fun put(keyBytes: ByteArray, valueBytes: ByteArray) {
-        val cell = LeafNodeCell()
-        cell.setKey(keyBytes.toByteBuffer())
-        cell.setValue(valueBytes.toByteBuffer())
-        val result = findKey(keyBytes)
-        when(result) {
-            is FindKeyResult.Found -> update(result.putIndex, cell)
-            is FindKeyResult.NotFound -> insert(result.putIndex, cell)
+    fun get(key: GenericRecord): GenericRecord? {
+        val keyBytes = table.key.write(key)
+        val bytes = get(keyBytes)
+        return if (bytes == null) {
+            null
+        } else {
+            table.record.read(bytes)
         }
     }
 
-    private fun cells(): MutableList<LeafNodeCell> {
-        return page.getCells()
+    fun put(keyBytes: ByteArray, valueBytes: ByteArray) {
+        val recordBytes = keyBytes + valueBytes
+        val result = findKey(keyBytes)
+        when(result) {
+            is FindKeyResult.Found -> update(result.putIndex, recordBytes)
+            is FindKeyResult.NotFound -> insert(result.putIndex, recordBytes)
+        }
+    }
+
+    fun put(key: GenericRecord, value: GenericRecord) {
+        val keyBytes = table.key.write(key)
+        val valueBytes = table.value.write(value)
+        put(keyBytes, valueBytes)
     }
 
     private sealed class FindKeyResult {
-        data class Found(val putIndex: Int, val value: ByteBuffer) : FindKeyResult()
+        data class Found(val putIndex: Int, val bytes: ByteArray) : FindKeyResult()
         data class NotFound(val putIndex: Int): FindKeyResult()
     }
 
     private fun findKey(keyBytes: ByteArray): FindKeyResult {
-        val cells = cells()
-        cells.forEachIndexed { index, cell ->
-            when(table.key.compare(cell.getKey().toByteArray(), keyBytes)) {
-                0 -> return FindKeyResult.Found(index, cell.getValue())
+        val records = page.getRecords()
+        records.forEachIndexed { index, bytebuff ->
+            val bytes = bytebuff.toByteArray()
+            when(table.key.compare(bytes, keyBytes)) {
+                0 -> return FindKeyResult.Found(index, bytes)
                 1 -> return FindKeyResult.NotFound(index - 1)
             }
         }
-        return FindKeyResult.NotFound(cells.size)
+        return FindKeyResult.NotFound(records.size)
     }
 
-    private fun insert(index: Int, cell: LeafNodeCell) {
-        cells().add(index, cell)
+    private fun insert(index: Int, bytes: ByteArray) {
+        page.getRecords().add(index, bytes.toByteBuffer())
     }
 
-    private fun update(index: Int, cell: LeafNodeCell) {
-        cells()[index] = cell
+    private fun update(index: Int, bytes: ByteArray) {
+        page.getRecords()[index] = bytes.toByteBuffer()
     }
 }

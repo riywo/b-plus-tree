@@ -8,44 +8,40 @@ import org.apache.avro.io.*
 import LeafNodePage
 import java.io.ByteArrayOutputStream
 
-val keySchema = SchemaBuilder.builder().record("key").fields()
+val schema = SchemaBuilder.builder().record("foo").fields()
     .name("a").type().stringType().noDefault()
-    .endRecord()
-val valueSchema = SchemaBuilder.builder().record("value").fields()
     .name("b").orderIgnore().type().stringType().noDefault()
     .endRecord()
 
-val table = Table(keySchema, valueSchema)
-
-fun ByteArray.toHexString() = joinToString(":") { String.format("%02x", it) }
+val table = Table(schema)
 
 fun main() {
     val leafNode = LeafNode(table)
-    println(leafNode.keys.map{ it.toByteArray().toHexString() })
+    println(leafNode.records)
     println(leafNode.dump().toHexString())
 
-    val key = GenericData.Record(keySchema)
+    val key = GenericData.Record(table.key.schema)
     key.put("a", "a")
-    val value = GenericData.Record(valueSchema)
+    val value = GenericData.Record(table.value.schema)
     value.put("b", "b")
-    println(leafNode.get(table.key.write(key)))
+    println(leafNode.get(key))
 
-    leafNode.put(table.key.write(key), table.value.write(value))
-    println(leafNode.keys.map{ it.toByteArray().toHexString() })
-    println(leafNode.get(table.key.write(key))?.toByteArray()?.toHexString())
+    leafNode.put(key, value)
+    println(leafNode.records)
+    println(leafNode.get(key))
     println(leafNode.dump().toHexString())
 
-    val key2 = GenericData.Record(keySchema)
+    val key2 = GenericData.Record(table.key.schema)
     key2.put("a", "c")
-    val value2 = GenericData.Record(valueSchema)
+    val value2 = GenericData.Record(table.value.schema)
     value2.put("b", "c")
 
-    leafNode.put(table.key.write(key2), table.value.write(value2))
-    println(leafNode.keys.map{ it.toByteArray().toHexString() })
-    println(leafNode.get(table.key.write(key))?.toByteArray()?.toHexString())
+    leafNode.put(key2, value2)
+    println(leafNode.records)
+    println(leafNode.get(key))
     println(leafNode.dump().toHexString())
 
     val leafNode2 = LeafNode(table)
     leafNode2.load(leafNode.dump())
-    println(leafNode2.keys.map{ it.toByteArray().toHexString() })
+    println(leafNode.records)
 }

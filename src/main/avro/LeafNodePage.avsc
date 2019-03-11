@@ -2,6 +2,6 @@
   "name": "LeafNodePage",
   "type": "record",
   "fields": [
-    {"name": "cells", "type": {"type": "array", "items": "LeafNodeCell"} }
+    {"name": "records", "type": {"type": "array", "items": "bytes"} }
   ]
 }

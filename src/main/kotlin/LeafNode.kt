@@ -56,13 +56,15 @@ class LeafNode(private val table: Table) {
         }
     }
 
-    fun get(key: GenericRecord): GenericRecord? {
-        val keyBytes = table.key.write(key)
+    fun get(key: Table.Key): Table.Record? {
+        val keyBytes = table.key.encode(key)
         val bytes = get(keyBytes)
         return if (bytes == null) {
             null
         } else {
-            table.record.read(bytes)
+            val record = table.Record()
+            record.load(bytes)
+            record
         }
     }
 
@@ -76,8 +78,8 @@ class LeafNode(private val table: Table) {
     }
 
     fun put(key: GenericRecord, value: GenericRecord) {
-        val keyBytes = table.key.write(key)
-        val valueBytes = table.value.write(value)
+        val keyBytes = table.key.encode(key)
+        val valueBytes = table.value.encode(value)
         put(keyBytes, valueBytes)
     }
 
@@ -88,8 +90,8 @@ class LeafNode(private val table: Table) {
 
     private fun findKey(keyBytes: ByteArray): FindKeyResult {
         val records = page.getRecords()
-        records.forEachIndexed { index, bytebuff ->
-            val bytes = bytebuff.toByteArray()
+        records.forEachIndexed { index, byteBuffer ->
+            val bytes = byteBuffer.toByteArray()
             when(table.key.compare(bytes, keyBytes)) {
                 0 -> return FindKeyResult.Found(index, bytes)
                 1 -> return FindKeyResult.NotFound(index - 1)

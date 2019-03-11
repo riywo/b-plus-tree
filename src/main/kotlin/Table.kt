@@ -1,13 +1,11 @@
 package com.riywo.ninja.bptree
 
 import org.apache.avro.Schema
-import org.apache.avro.generic.*
-import java.io.ByteArrayInputStream
 
 class Table(schema: Schema) {
-    val record: AvroRecordIO
-    val key: AvroRecordIO
-    val value: AvroRecordIO
+    val record: AvroRecord.IO
+    val key: AvroRecord.IO
+    val value: AvroRecord.IO
 
     init {
         val isOrdered = { f: Schema.Field -> f.order() != Schema.Field.Order.IGNORE }
@@ -22,26 +20,12 @@ class Table(schema: Schema) {
         }
         val keySchema = Schema.createRecord(keyFields.map(newField))
         val valueSchema = Schema.createRecord(valueFields.map(newField))
-        record = AvroRecordIO(schema)
-        key = AvroRecordIO(keySchema)
-        value = AvroRecordIO(valueSchema)
+        record = AvroRecord.IO(schema)
+        key = AvroRecord.IO(keySchema)
+        value = AvroRecord.IO(valueSchema)
     }
 
-    open class AvroRecord(private val io: AvroRecordIO) : GenericData.Record(io.schema) {
-        fun load(input: ByteArrayInputStream) {
-            io.read(this, input)
-        }
-
-        fun load(bytes: ByteArray) {
-            io.read(this, bytes)
-        }
-    }
-
-    inner class Record : AvroRecord(record) {
-        fun getKeyBytes(): ByteArray {
-            return table.key.write(this)
-        }
-    }
+    inner class Record : AvroRecord(record)
     inner class Key : AvroRecord(key)
     inner class Value : AvroRecord(value)
 }

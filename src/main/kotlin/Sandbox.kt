@@ -20,9 +20,9 @@ fun main() {
     println(leafNode.records)
     println(leafNode.dump().toHexString())
 
-    val key = GenericData.Record(table.key.schema)
+    val key = table.Key()
     key.put("a", "a")
-    val value = GenericData.Record(table.value.schema)
+    val value = table.Value()
     value.put("b", "b")
     println(leafNode.get(key))
 

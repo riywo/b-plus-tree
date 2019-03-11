@@ -26,6 +26,7 @@ class TestLeafNode {
         leafNode = LeafNode.new(table)
         leafNode.put(record)
         assertThat(leafNode.records().size).isEqualTo(1)
+        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
     }
 
     @Test
@@ -51,6 +52,7 @@ class TestLeafNode {
         assertThat(leafNode.records().size).isEqualTo(2)
         assertThat(leafNode.get(record)).isEqualTo(record)
         assertThat(leafNode.get(recordInserted)).isEqualTo(recordInserted)
+        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
     }
 
     @Test
@@ -63,6 +65,7 @@ class TestLeafNode {
         assertThat(leafNode.records().size).isEqualTo(1)
         assertThat(leafNode.get(record)).isEqualTo(recordUpdated)
         assertThat(leafNode.get(recordUpdated)).isEqualTo(recordUpdated)
+        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
     }
 
     @Test
@@ -71,6 +74,7 @@ class TestLeafNode {
 
         assertThat(leafNode.records().size).isEqualTo(0)
         assertThat(leafNode.get(record)).isEqualTo(null)
+        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
     }
 
     @Test
@@ -83,5 +87,6 @@ class TestLeafNode {
         }
         assertThat(leafNode.records().size).isEqualTo(1)
         assertThat(leafNode.get(record)).isEqualTo(record)
+        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
     }
 }

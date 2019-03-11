@@ -3,22 +3,17 @@ package com.riywo.ninja.bptree
 import LeafNodePage
 import java.nio.ByteBuffer
 
-const val AVRO_RECORD_HEADER_SIZE = 10
-
-const val MAX_PAGE_SIZE = 4 * 1024
-
-class LeafNodeFullException(message: String) : Exception(message)
-
-class LeafNode(val table: Table, private val page: LeafNodePage) {
+class LeafNode(val table: Table, private val page: LeafNodePage, private var byteSize: Int) {
     companion object {
         fun new(table: Table): LeafNode {
             val page = LeafNodePage(mutableListOf<ByteBuffer>())
-            return LeafNode(table, page)
+            val byteSize = page.toByteBuffer().limit()
+            return LeafNode(table, page, byteSize)
         }
 
         fun load(table: Table, byteBuffer: ByteBuffer): LeafNode {
             val page = LeafNodePage.fromByteBuffer(byteBuffer)
-            return LeafNode(table, page)
+            return LeafNode(table, page, byteBuffer.limit())
         }
     }
 
@@ -27,7 +22,7 @@ class LeafNode(val table: Table, private val page: LeafNodePage) {
     }
 
     fun pageSize(): Int {
-        return dump().limit()
+        return byteSize
     }
 
     fun pageRecords(): List<ByteBuffer> {
@@ -54,6 +49,8 @@ class LeafNode(val table: Table, private val page: LeafNodePage) {
         val result = findKey(keyByteBuffer)
         if (result is FindKeyResult.Found) {
             page.getRecords().removeAt(result.index)
+            byteSize -= result.byteBuffer.limit() + 1
+            if (pageRecords().isEmpty()) byteSize -= 1
         }
     }
 
@@ -76,24 +73,25 @@ class LeafNode(val table: Table, private val page: LeafNodePage) {
     }
 
     private fun insert(index: Int, byteBuffer: ByteBuffer) {
-        page.getRecords().add(index, byteBuffer)
-        if (isFull()) {
-            page.getRecords().removeAt(index)
+        var newByteSize = byteSize + byteBuffer.limit() + 1
+        if (pageRecords().isEmpty()) newByteSize += 1
+        if (newByteSize > MAX_PAGE_SIZE) {
             throw LeafNodeFullException("Can't insert record")
+        } else {
+            page.getRecords().add(index, byteBuffer)
+            byteSize = newByteSize
         }
     }
 
     private fun update(index: Int, newByteBuffer: ByteBuffer, oldByteBuffer: ByteBuffer) {
-        // TODO merge new and old
-        page.getRecords()[index] = newByteBuffer
-        if (isFull()) {
-            page.getRecords()[index] = oldByteBuffer
+        val newByteSize = byteSize + newByteBuffer.limit() - oldByteBuffer.limit()
+        if (newByteSize > MAX_PAGE_SIZE) {
             throw LeafNodeFullException("Can't update record")
+        } else {
+            // TODO merge new and old
+            page.getRecords()[index] = newByteBuffer
+            byteSize = newByteSize
         }
-    }
-
-    private fun isFull(): Boolean {
-        return pageSize() > MAX_PAGE_SIZE // TODO approximate calculation
     }
 
     override fun hashCode(): Int {

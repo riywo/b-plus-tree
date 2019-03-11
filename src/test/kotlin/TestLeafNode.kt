@@ -82,7 +82,7 @@ class TestLeafNode {
         val newRecord = table.Record()
         newRecord.put("key", "2")
         newRecord.put("value", "a".repeat(MAX_PAGE_SIZE))
-        assertThrows<LeafNodeFullException> {
+        assertThrows<PageFullException> {
             leafNode.put(newRecord)
         }
         assertThat(leafNode.records().size).isEqualTo(1)

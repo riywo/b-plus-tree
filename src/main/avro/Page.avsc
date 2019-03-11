@@ -1,5 +1,5 @@
 {
-  "name": "LeafNodePage",
+  "name": "Page",
   "type": "record",
   "fields": [
     {"name": "records", "type": {"type": "array", "items": "bytes"} }

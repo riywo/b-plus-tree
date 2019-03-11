@@ -19,32 +19,15 @@ class TestAvroGenericRecord {
 
         private val io = AvroGenericRecord.IO(schema)
 
-        data class TestData(
-            val f1: String,
-            val bytes: ByteArray
-        )
+        @Test
+        fun `encode and decode`() {
+            val record1 = AvroGenericRecord(io)
+            record1.put("f1", "aaa")
+            val encoded = io.encode(record1)
+            val record2 = AvroGenericRecord(io)
+            record2.load(encoded)
+            assertThat(record2).isEqualTo(record1)
 
-        private fun testDataProvider() = Stream.of(
-            TestData("foo", byteArrayOf(6, 102, 111, 111))
-        )
-
-        @ParameterizedTest
-        @MethodSource("testDataProvider")
-        fun `write to stream`(data: TestData) {
-            val output = ByteArrayOutputStream()
-            val record = GenericData.Record(schema)
-            record.put("f1", data.f1)
-            io.encode(record, output)
-            assertThat(output.toByteArray()).isEqualTo(data.bytes)
-        }
-
-        @ParameterizedTest
-        @MethodSource("testDataProvider")
-        fun `read from stream`(data: TestData) {
-            val input = ByteArrayInputStream(data.bytes)
-            val record = GenericData.Record(schema)
-            io.decode(record, input)
-            assertThat(record.get("f1").toString()).isEqualTo(data.f1)
         }
     }
 }

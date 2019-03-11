@@ -3,15 +3,17 @@ package com.riywo.ninja.bptree
 import org.apache.avro.Schema
 import org.apache.avro.generic.*
 import org.apache.avro.io.*
+import org.apache.avro.message.*
 import java.io.*
+import java.nio.ByteBuffer
 
 open class AvroGenericRecord(private val io: IO) : GenericData.Record(io.schema) {
     fun load(input: ByteArrayInputStream) {
         io.decode(this, input)
     }
 
-    fun load(bytes: ByteArray) {
-        io.decode(this, bytes)
+    fun load(byteBuffer: ByteBuffer) {
+        io.decode(this, byteBuffer)
     }
 
     class IO(val schema: Schema) {
@@ -21,35 +23,23 @@ open class AvroGenericRecord(private val io: IO) : GenericData.Record(io.schema)
             }
         }
 
-        private val writer = GenericDatumWriter<GenericRecord>(schema)
-        private val reader = GenericDatumReader<GenericRecord>(schema)
+        private val encoder = BinaryMessageEncoder<GenericRecord>(GenericData(), schema)
+        private val decoder = BinaryMessageDecoder<GenericRecord>(GenericData(), schema)
 
-        private val encoderFactory = EncoderFactory.get()
-        private val decoderFactory = DecoderFactory.get()
-
-        private var encoder: BinaryEncoder? = null
-        private var decoder: BinaryDecoder? = null
-
-        fun encode(record: GenericRecord, output: ByteArrayOutputStream){
-            encoder = encoderFactory.binaryEncoder(output, encoder)
-            writer.write(record, encoder)
-            encoder?.flush()
+        fun encode(record: GenericRecord, output: OutputStream) {
+            encoder.encode(record, output)
         }
 
-        fun encode(record: GenericRecord): ByteArray {
-            val output = ByteArrayOutputStream()
-            encode(record, output)
-            return output.toByteArray()
+        fun encode(record: GenericRecord): ByteBuffer {
+            return encoder.encode(record)
         }
 
-        fun decode(record: GenericRecord, input: ByteArrayInputStream) {
-            decoder = decoderFactory.binaryDecoder(input, decoder)
-            reader.read(record, decoder)
+        fun decode(record: GenericRecord, input: InputStream) {
+            decoder.decode(input, record)
         }
 
-        fun decode(record: GenericRecord, bytes: ByteArray) {
-            val input = ByteArrayInputStream(bytes)
-            decode(record, input)
+        fun decode(record: GenericRecord, byteBuffer: ByteBuffer) {
+            decoder.decode(byteBuffer, record)
         }
 
         fun compare(a: ByteArray, b: ByteArray): Int {

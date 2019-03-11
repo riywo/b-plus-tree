@@ -2,8 +2,8 @@ package com.riywo.ninja.bptree
 
 import java.nio.ByteBuffer
 
-fun ByteBuffer.toByteArray(): ByteArray {
-    rewind()
+fun ByteBuffer.toByteArray(startPosition: Int = 0): ByteArray {
+    position(startPosition)
     val bytes = ByteArray(remaining())
     get(bytes)
     rewind()

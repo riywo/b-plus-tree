@@ -15,32 +15,63 @@ val schema = SchemaBuilder.builder().record("foo").fields()
 
 val table = Table(schema)
 
+fun LeafNode.records(): List<Table.Record> {
+    return pageRecords().map {
+        val record = table.Record()
+        record.load(it)
+        record
+    }
+}
+
+fun LeafNode.get(record: GenericRecord): Table.Record? {
+    val keyByteBuffer = table.key.encode(record)
+    val byteBuffer = get(keyByteBuffer)
+    return if (byteBuffer == null) {
+        null
+    } else {
+        val found = table.Record()
+        found.load(byteBuffer)
+        found
+    }
+}
+
+fun LeafNode.put(record: GenericRecord) {
+    val keyByteBuffer = table.key.encode(record)
+    val recordByteBuffer = table.record.encode(record)
+    put(keyByteBuffer, recordByteBuffer)
+}
+
+
 fun main() {
     val leafNode = LeafNode.new(table)
-    println(leafNode.records)
+    println(leafNode.records())
     println(leafNode.dump().toHexString())
 
-    val key = table.Key()
-    key.put("a", "a")
-    val value = table.Value()
-    value.put("b", "b")
-    println(leafNode.get(key))
-
-    leafNode.put(key, value)
-    println(leafNode.records)
-    println(leafNode.get(key))
+    val record = table.Record()
+    record.put("a", "a")
+    record.put("b", "b")
+    println(leafNode.get(record))
+    leafNode.put(record)
+    println(leafNode.records())
+    println(leafNode.get(record))
     println(leafNode.dump().toHexString())
 
-    val key2 = GenericData.Record(table.key.schema)
-    key2.put("a", "c")
-    val value2 = GenericData.Record(table.value.schema)
-    value2.put("b", "c")
+    val record2 = table.Record()
+    record2.put("a", "c")
+    record2.put("b", "c")
+    leafNode.put(record2)
+    println(leafNode.records())
+    println(leafNode.get(record2))
+    println(leafNode.dump().toHexString())
 
-    leafNode.put(key2, value2)
-    println(leafNode.records)
-    println(leafNode.get(key))
+    val record3 = table.Record()
+    record3.put("a", "a")
+    record3.put("b", "c")
+    leafNode.put(record3)
+    println(leafNode.records())
+    println(leafNode.get(record3))
     println(leafNode.dump().toHexString())
 
     val leafNode2 = LeafNode.load(table, leafNode.dump())
-    println(leafNode2.records)
+    println(leafNode2.records())
 }

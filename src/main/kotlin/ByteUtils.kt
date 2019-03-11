@@ -13,3 +13,4 @@ fun ByteBuffer.toByteArray(): ByteArray {
 fun ByteArray.toByteBuffer(): ByteBuffer = ByteBuffer.wrap(this)
 
 fun ByteArray.toHexString() = joinToString(":") { String.format("%02x", it) }
+fun ByteBuffer.toHexString() = toByteArray().toHexString()

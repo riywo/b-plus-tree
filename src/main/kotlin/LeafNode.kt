@@ -7,38 +7,21 @@ import org.apache.avro.specific.*
 import java.io.*
 import java.nio.ByteBuffer
 
-class LeafNode(private val table: Table) {
+class LeafNode(private val table: Table, private val page: LeafNodePage) {
     companion object {
-        private val reader = SpecificDatumReader<LeafNodePage>(LeafNodePage::class.java)
-        private val writer = SpecificDatumWriter<LeafNodePage>(LeafNodePage::class.java)
-        private val encoderFactory = EncoderFactory.get()
-        private val decoderFactory = DecoderFactory.get()
-        private var encoder: BinaryEncoder? = null
-        private var decoder: BinaryDecoder? = null
+        fun new(table: Table): LeafNode {
+            val page = LeafNodePage(mutableListOf<ByteBuffer>())
+            return LeafNode(table, page)
+        }
+
+        fun load(table: Table, byteBuffer: ByteBuffer): LeafNode {
+            val page = LeafNodePage.fromByteBuffer(byteBuffer)
+            return LeafNode(table, page)
+        }
     }
 
-    private val page = LeafNodePage(mutableListOf<ByteBuffer>())
-
-    fun load(input: ByteArrayInputStream) {
-        decoder = decoderFactory.binaryDecoder(input, decoder)
-        reader.read(page, decoder)
-    }
-
-    fun load(bytes: ByteArray) {
-        val input = ByteArrayInputStream(bytes)
-        load(input)
-    }
-
-    fun dump(output: ByteArrayOutputStream) {
-        encoder = encoderFactory.binaryEncoder(output, encoder)
-        writer.write(page, encoder)
-        encoder?.flush()
-    }
-
-    fun dump(): ByteArray {
-        val output = ByteArrayOutputStream()
-        dump(output)
-        return output.toByteArray()
+    fun dump(): ByteBuffer {
+        return page.toByteBuffer()
     }
 
     val records: List<Table.Record>

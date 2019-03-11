@@ -10,14 +10,14 @@ import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
 import java.io.*
 
-class TestAvroRecord {
+class TestAvroGenericRecord {
     @Nested
     class IO {
         private val schema = SchemaBuilder.record("test").fields()
             .name("f1").type().stringType().noDefault()
             .endRecord()
 
-        private val io = AvroRecord.IO(schema)
+        private val io = AvroGenericRecord.IO(schema)
 
         data class TestData(
             val f1: String,

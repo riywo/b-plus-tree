@@ -16,7 +16,7 @@ val schema = SchemaBuilder.builder().record("foo").fields()
 val table = Table(schema)
 
 fun main() {
-    val leafNode = LeafNode(table)
+    val leafNode = LeafNode.new(table)
     println(leafNode.records)
     println(leafNode.dump().toHexString())
 
@@ -41,7 +41,6 @@ fun main() {
     println(leafNode.get(key))
     println(leafNode.dump().toHexString())
 
-    val leafNode2 = LeafNode(table)
-    leafNode2.load(leafNode.dump())
-    println(leafNode.records)
+    val leafNode2 = LeafNode.load(table, leafNode.dump())
+    println(leafNode2.records)
 }

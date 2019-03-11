@@ -5,7 +5,7 @@ import org.apache.avro.generic.*
 import org.apache.avro.io.*
 import java.io.*
 
-open class AvroRecord(private val io: IO) : GenericData.Record(io.schema) {
+open class AvroGenericRecord(private val io: IO) : GenericData.Record(io.schema) {
     fun load(input: ByteArrayInputStream) {
         io.decode(this, input)
     }

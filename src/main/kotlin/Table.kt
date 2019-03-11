@@ -3,9 +3,9 @@ package com.riywo.ninja.bptree
 import org.apache.avro.Schema
 
 class Table(schema: Schema) {
-    val record: AvroRecord.IO
-    val key: AvroRecord.IO
-    val value: AvroRecord.IO
+    val record: AvroGenericRecord.IO
+    val key: AvroGenericRecord.IO
+    val value: AvroGenericRecord.IO
 
     init {
         val isOrdered = { f: Schema.Field -> f.order() != Schema.Field.Order.IGNORE }
@@ -20,12 +20,12 @@ class Table(schema: Schema) {
         }
         val keySchema = Schema.createRecord(keyFields.map(newField))
         val valueSchema = Schema.createRecord(valueFields.map(newField))
-        record = AvroRecord.IO(schema)
-        key = AvroRecord.IO(keySchema)
-        value = AvroRecord.IO(valueSchema)
+        record = AvroGenericRecord.IO(schema)
+        key = AvroGenericRecord.IO(keySchema)
+        value = AvroGenericRecord.IO(valueSchema)
     }
 
-    inner class Record : AvroRecord(record)
-    inner class Key : AvroRecord(key)
-    inner class Value : AvroRecord(value)
+    inner class Record : AvroGenericRecord(record)
+    inner class Key : AvroGenericRecord(key)
+    inner class Value : AvroGenericRecord(value)
 }

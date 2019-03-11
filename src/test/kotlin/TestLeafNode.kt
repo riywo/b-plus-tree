@@ -38,6 +38,7 @@ class TestLeafNode {
     fun `get record`() {
         val found = leafNode.get(record)
         assertThat(found).isEqualTo(record)
+        assertThat(leafNode.records().size).isEqualTo(1)
     }
 
     @Test
@@ -70,5 +71,17 @@ class TestLeafNode {
 
         assertThat(leafNode.records().size).isEqualTo(0)
         assertThat(leafNode.get(record)).isEqualTo(null)
+    }
+
+    @Test
+    fun `can't put record`() {
+        val newRecord = table.Record()
+        newRecord.put("key", "2")
+        newRecord.put("value", "a".repeat(MAX_PAGE_SIZE))
+        assertThrows<LeafNodeFullException> {
+            leafNode.put(newRecord)
+        }
+        assertThat(leafNode.records().size).isEqualTo(1)
+        assertThat(leafNode.get(record)).isEqualTo(record)
     }
 }

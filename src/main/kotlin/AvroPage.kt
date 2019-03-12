@@ -27,34 +27,32 @@ class AvroPage private constructor(
 
     override fun size(): Int = byteSize
 
-    override fun records(): List<ByteBuffer> = data.getRecords()
+    override fun records(): List<GenericRecord> = data.getRecords().map{
+        val record = AvroGenericRecord(recordIO)
+        recordIO.decode(record, it)
+        record
+    }
+
+    override fun recordsSize(): Int = data.getRecords().size
 
     override fun dump(): ByteBuffer = data.toByteBuffer()
 
-    override fun get(keyByteBuffer: ByteBuffer): ByteBuffer? {
+    override fun get(key: GenericRecord): GenericRecord? {
+        val keyByteBuffer = keyIO.encode(key)
         val result = findKey(keyByteBuffer)
         return when(result) {
-            is FindKeyResult.Found -> result.byteBuffer
+            is FindKeyResult.Found -> {
+                val found = AvroGenericRecord(recordIO)
+                found.load(result.byteBuffer)
+                found
+            }
             is FindKeyResult.NotFound -> null
         }
     }
 
-    override fun get(key: GenericRecord): GenericRecord? {
-        val keyByteBuffer = keyIO.encode(key)
-        val byteBuffer = get(keyByteBuffer)
-        return if (byteBuffer == null) {
-            null
-        } else {
-            val found = AvroGenericRecord(recordIO)
-            found.load(byteBuffer)
-            found
-        }
-    }
-
-    override fun put(keyByteBuffer: ByteBuffer, recordByteBuffer: ByteBuffer) {
-        if (compareKeys(keyByteBuffer, recordByteBuffer) != 0) {
-            throw KeyBytesMismatchException("")
-        }
+    override fun put(record: GenericRecord) {
+        val keyByteBuffer = keyIO.encode(record)
+        val recordByteBuffer = recordIO.encode(record)
         val result = findKey(keyByteBuffer)
         when(result) {
             is FindKeyResult.Found -> update(result.index, recordByteBuffer, result.byteBuffer)
@@ -62,24 +60,14 @@ class AvroPage private constructor(
         }
     }
 
-    override fun put(record: GenericRecord) {
-        val keyByteBuffer = keyIO.encode(record)
-        val recordByteBuffer = recordIO.encode(record)
-        put(keyByteBuffer, recordByteBuffer)
-    }
-
-    override fun delete(keyByteBuffer: ByteBuffer) {
+    override fun delete(key: GenericRecord) {
+        val keyByteBuffer = keyIO.encode(key)
         val result = findKey(keyByteBuffer)
         if (result is FindKeyResult.Found) {
             data.getRecords().removeAt(result.index)
             byteSize -= result.byteBuffer.limit() + 1 // 1 == Bytes length
-            if (records().isEmpty()) byteSize -= 1 // 1 == Array length
+            if (recordsSize() == 0) byteSize -= 1 // 1 == Array length
         }
-    }
-
-    override fun delete(key: GenericRecord) {
-        val keyByteBuffer = keyIO.encode(key)
-        delete(keyByteBuffer)
     }
 
     private sealed class FindKeyResult {
@@ -90,8 +78,9 @@ class AvroPage private constructor(
     private fun findKey(keyByteBuffer: ByteBuffer): FindKeyResult {
         val keyBytes = keyByteBuffer.toByteArray(AVRO_RECORD_HEADER_SIZE)
         val records = records()
-        records.forEachIndexed { index, byteBuffer ->
-            when(compareKeys(byteBuffer, keyBytes)) {
+        data.getRecords().forEachIndexed { index, byteBuffer ->
+            val bytes = byteBuffer.toByteArray(AVRO_RECORD_HEADER_SIZE)
+            when(keyIO.compare(bytes, keyBytes)) {
                 0 -> return FindKeyResult.Found(index, byteBuffer)
                 1 -> return FindKeyResult.NotFound(index - 1)
             }
@@ -99,25 +88,9 @@ class AvroPage private constructor(
         return FindKeyResult.NotFound(records.size)
     }
 
-    private fun compareKeys(a: ByteBuffer, b: ByteBuffer): Int {
-        val aBytes = a.toByteArray(AVRO_RECORD_HEADER_SIZE)
-        val bBytes = b.toByteArray(AVRO_RECORD_HEADER_SIZE)
-        return keyIO.compare(aBytes, bBytes)
-    }
-
-    private fun compareKeys(a: ByteBuffer, bBytes: ByteArray): Int {
-        val aBytes = a.toByteArray(AVRO_RECORD_HEADER_SIZE)
-        return keyIO.compare(aBytes, bBytes)
-    }
-
-    private fun compareKeys(aBytes: ByteArray, b: ByteBuffer): Int {
-        val bBytes = b.toByteArray(AVRO_RECORD_HEADER_SIZE)
-        return keyIO.compare(aBytes, bBytes)
-    }
-
     private fun insert(index: Int, byteBuffer: ByteBuffer) {
         var newByteSize = byteSize + byteBuffer.limit() + 1 // 1 == Bytes length
-        if (records().isEmpty()) newByteSize += 1 // 1 == Array length
+        if (recordsSize() == 0) newByteSize += 1 // 1 == Array length
         if (newByteSize > MAX_PAGE_SIZE) {
             throw PageFullException("Can't insert record")
         } else {

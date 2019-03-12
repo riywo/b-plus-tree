@@ -7,15 +7,9 @@ interface Page {
     fun id(): Int
     fun size(): Int
     fun dump(): ByteBuffer
-
-    fun records(): List<ByteBuffer>
-
-    fun get(keyByteBuffer: ByteBuffer): ByteBuffer?
+    fun records(): List<GenericRecord>
+    fun recordsSize(): Int
     fun get(key: GenericRecord): GenericRecord?
-
-    fun put(keyByteBuffer: ByteBuffer, recordByteBuffer: ByteBuffer)
     fun put(record: GenericRecord)
-
-    fun delete(keyByteBuffer: ByteBuffer)
     fun delete(key: GenericRecord)
 }

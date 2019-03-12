@@ -5,7 +5,6 @@ import org.apache.avro.Schema
 class Table(schema: Schema) {
     val record: AvroGenericRecord.IO
     val key: AvroGenericRecord.IO
-    val value: AvroGenericRecord.IO
 
     init {
         val isOrdered = { f: Schema.Field -> f.order() != Schema.Field.Order.IGNORE }
@@ -18,14 +17,12 @@ class Table(schema: Schema) {
         if (valueFields.any(isOrdered)) {
             throw IllegalArgumentException("No ordered field is allowed after the first ignored field: $schema")
         }
-        val keySchema = Schema.createRecord(keyFields.map(newField))
-        val valueSchema = Schema.createRecord(valueFields.map(newField))
+
         record = AvroGenericRecord.IO(schema)
+        val keySchema = Schema.createRecord(keyFields.map(newField))
         key = AvroGenericRecord.IO(keySchema)
-        value = AvroGenericRecord.IO(valueSchema)
     }
 
     inner class Record : AvroGenericRecord(record)
     inner class Key : AvroGenericRecord(key)
-    inner class Value : AvroGenericRecord(value)
 }

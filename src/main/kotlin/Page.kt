@@ -11,8 +11,6 @@ interface Page {
     fun get(keyByteBuffer: ByteBuffer): ByteBuffer?
     fun put(keyByteBuffer: ByteBuffer, recordByteBuffer: ByteBuffer)
     fun delete(keyByteBuffer: ByteBuffer)
-    override fun hashCode(): Int
-    override fun equals(other: Any?): Boolean
 }
 
 class PageImpl private constructor(
@@ -105,20 +103,5 @@ class PageImpl private constructor(
             data.getRecords()[index] = newByteBuffer
             byteSize = newByteSize
         }
-    }
-
-    override fun hashCode(): Int {
-        return data.hashCode()
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as PageImpl
-
-        if (data != other.data) return false
-
-        return true
     }
 }

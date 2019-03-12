@@ -12,32 +12,37 @@ class TestLeafNode {
         .endRecord()
     private val table = Table(schema)
 
-    private var leafNode: LeafNode = LeafNode.new(table)
+    private var page: Page = PageImpl.new(table, 0)
+    private var leafNode: LeafNode = LeafNode(page)
     private val record = table.Record()
 
     init {
         record.put("key", "1")
         record.put("value", "a")
-        leafNode.put(record)
+        leafNode.put(table, record)
     }
 
     @BeforeEach
     fun init() {
-        leafNode = LeafNode.new(table)
-        leafNode.put(record)
+        page = PageImpl.new(table, 0)
+        leafNode = LeafNode(page)
+        leafNode.put(table, record)
         assertThat(leafNode.records().size).isEqualTo(1)
-        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
+        assertThat(leafNode.size()).isEqualTo(leafNode.dump().limit())
     }
 
     @Test
     fun `dump and load`() {
-        val leafNodeLoaded = LeafNode.load(table, leafNode.dump())
-        assertThat(leafNodeLoaded).isEqualTo(leafNode)
+        val pageLoaded = PageImpl.load(table, leafNode.dump())
+        val leafNodeLoaded = LeafNode(pageLoaded)
+        assertThat(leafNodeLoaded.id()).isEqualTo(leafNode.id())
+        assertThat(leafNodeLoaded.size()).isEqualTo(leafNode.size())
+        assertThat(leafNodeLoaded.dump()).isEqualTo(leafNode.dump())
     }
 
     @Test
     fun `get record`() {
-        val found = leafNode.get(record)
+        val found = leafNode.get(table, record)
         assertThat(found).isEqualTo(record)
         assertThat(leafNode.records().size).isEqualTo(1)
     }
@@ -47,12 +52,12 @@ class TestLeafNode {
         val recordInserted = table.Record()
         recordInserted.put("key", "2")
         recordInserted.put("value", "b")
-        leafNode.put(recordInserted)
+        leafNode.put(table, recordInserted)
 
         assertThat(leafNode.records().size).isEqualTo(2)
-        assertThat(leafNode.get(record)).isEqualTo(record)
-        assertThat(leafNode.get(recordInserted)).isEqualTo(recordInserted)
-        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
+        assertThat(leafNode.get(table, record)).isEqualTo(record)
+        assertThat(leafNode.get(table, recordInserted)).isEqualTo(recordInserted)
+        assertThat(leafNode.size()).isEqualTo(leafNode.dump().limit())
     }
 
     @Test
@@ -60,21 +65,21 @@ class TestLeafNode {
         val recordUpdated = table.Record()
         recordUpdated.put("key", "1")
         recordUpdated.put("value", "b")
-        leafNode.put(recordUpdated)
+        leafNode.put(table, recordUpdated)
 
         assertThat(leafNode.records().size).isEqualTo(1)
-        assertThat(leafNode.get(record)).isEqualTo(recordUpdated)
-        assertThat(leafNode.get(recordUpdated)).isEqualTo(recordUpdated)
-        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
+        assertThat(leafNode.get(table, record)).isEqualTo(recordUpdated)
+        assertThat(leafNode.get(table, recordUpdated)).isEqualTo(recordUpdated)
+        assertThat(leafNode.size()).isEqualTo(leafNode.dump().limit())
     }
 
     @Test
     fun `delete record`() {
-        leafNode.delete(record)
+        leafNode.delete(table, record)
 
         assertThat(leafNode.records().size).isEqualTo(0)
-        assertThat(leafNode.get(record)).isEqualTo(null)
-        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
+        assertThat(leafNode.get(table, record)).isEqualTo(null)
+        assertThat(leafNode.size()).isEqualTo(leafNode.dump().limit())
     }
 
     @Test
@@ -83,10 +88,10 @@ class TestLeafNode {
         newRecord.put("key", "2")
         newRecord.put("value", "a".repeat(MAX_PAGE_SIZE))
         assertThrows<PageFullException> {
-            leafNode.put(newRecord)
+            leafNode.put(table, newRecord)
         }
         assertThat(leafNode.records().size).isEqualTo(1)
-        assertThat(leafNode.get(record)).isEqualTo(record)
-        assertThat(leafNode.pageSize()).isEqualTo(leafNode.dump().limit())
+        assertThat(leafNode.get(table, record)).isEqualTo(record)
+        assertThat(leafNode.size()).isEqualTo(leafNode.dump().limit())
     }
 }

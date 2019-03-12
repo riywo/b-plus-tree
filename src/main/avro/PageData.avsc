@@ -1,7 +1,8 @@
 {
-  "name": "Page",
+  "name": "PageData",
   "type": "record",
   "fields": [
+    {"name": "id", "type": "int"},
     {"name": "records", "type": {"type": "array", "items": "bytes"} }
   ]
 }

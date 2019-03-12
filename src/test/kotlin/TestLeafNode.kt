@@ -12,7 +12,7 @@ class TestLeafNode {
         .endRecord()
     private val table = Table(schema)
 
-    private var page: Page = PageImpl.new(table, 0)
+    private var page: Page = AvroPage.new(table, 0)
     private var leafNode: LeafNode = LeafNode(page)
     private val record = table.Record()
 
@@ -24,7 +24,7 @@ class TestLeafNode {
 
     @BeforeEach
     fun init() {
-        page = PageImpl.new(table, 0)
+        page = AvroPage.new(table, 0)
         leafNode = LeafNode(page)
         leafNode.put(table, record)
         assertThat(leafNode.records().size).isEqualTo(1)
@@ -33,7 +33,7 @@ class TestLeafNode {
 
     @Test
     fun `dump and load`() {
-        val pageLoaded = PageImpl.load(table, leafNode.dump())
+        val pageLoaded = AvroPage.load(table, leafNode.dump())
         val leafNodeLoaded = LeafNode(pageLoaded)
         assertThat(leafNodeLoaded.id()).isEqualTo(leafNode.id())
         assertThat(leafNodeLoaded.size()).isEqualTo(leafNode.size())

@@ -13,7 +13,7 @@ interface Page {
     fun delete(keyByteBuffer: ByteBuffer)
 }
 
-class PageImpl private constructor(
+class AvroPage private constructor(
     private val key: AvroGenericRecord.IO,
     private val data: PageData,
     private var byteSize: Int
@@ -28,7 +28,7 @@ class PageImpl private constructor(
             val key = table.key
             val data = PageData.fromByteBuffer(byteBuffer)
             val size = byteBuffer.limit()
-            return PageImpl(key, data, size)
+            return AvroPage(key, data, size)
         }
     }
 
@@ -38,7 +38,7 @@ class PageImpl private constructor(
 
     override fun records(): List<ByteBuffer> = data.getRecords()
 
-    override fun dump() = data.toByteBuffer()
+    override fun dump(): ByteBuffer = data.toByteBuffer()
 
     override fun get(keyByteBuffer: ByteBuffer): ByteBuffer? {
         val result = findKey(keyByteBuffer)

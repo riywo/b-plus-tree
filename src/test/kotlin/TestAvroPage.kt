@@ -18,13 +18,13 @@ class TestAvroPage {
     init {
         record.put("key", "1")
         record.put("value", "a")
-        page.put(table.key.encode(record), table.record.encode(record))
+        page.put(record)
     }
 
     @BeforeEach
     fun init() {
         page = AvroPage.new(table, 0)
-        page.put(table.key.encode(record), table.record.encode(record))
+        page.put(record)
         assertThat(page.records().size).isEqualTo(1)
         assertThat(page.size()).isEqualTo(page.dump().limit())
     }
@@ -39,8 +39,8 @@ class TestAvroPage {
 
     @Test
     fun `get record`() {
-        val found = page.get(table.key.encode(record))
-        assertThat(found).isEqualTo(table.record.encode(record))
+        val found = page.get(record)
+        assertThat(found).isEqualTo(record)
         assertThat(page.records().size).isEqualTo(1)
     }
 
@@ -49,11 +49,11 @@ class TestAvroPage {
         val recordInserted = table.Record()
         recordInserted.put("key", "2")
         recordInserted.put("value", "b")
-        page.put(table.key.encode(recordInserted), table.record.encode(recordInserted))
+        page.put(recordInserted)
 
         assertThat(page.records().size).isEqualTo(2)
-        assertThat(page.get(table.key.encode(record))).isEqualTo(table.record.encode(record))
-        assertThat(page.get(table.key.encode(recordInserted))).isEqualTo(table.record.encode(recordInserted))
+        assertThat(page.get(record)).isEqualTo(record)
+        assertThat(page.get(recordInserted)).isEqualTo(recordInserted)
         assertThat(page.size()).isEqualTo(page.dump().limit())
     }
 
@@ -62,20 +62,20 @@ class TestAvroPage {
         val recordUpdated = table.Record()
         recordUpdated.put("key", "1")
         recordUpdated.put("value", "b")
-        page.put(table.key.encode(recordUpdated), table.record.encode(recordUpdated))
+        page.put(recordUpdated)
 
         assertThat(page.records().size).isEqualTo(1)
-        assertThat(page.get(table.key.encode(record))).isEqualTo(table.record.encode(recordUpdated))
-        assertThat(page.get(table.key.encode(recordUpdated))).isEqualTo(table.record.encode(recordUpdated))
+        assertThat(page.get(record)).isEqualTo(recordUpdated)
+        assertThat(page.get(recordUpdated)).isEqualTo(recordUpdated)
         assertThat(page.size()).isEqualTo(page.dump().limit())
     }
 
     @Test
     fun `delete record`() {
-        page.delete(table.key.encode(record))
+        page.delete(record)
 
         assertThat(page.records().size).isEqualTo(0)
-        assertThat(page.get(table.key.encode(record))).isEqualTo(null)
+        assertThat(page.get(record)).isEqualTo(null)
         assertThat(page.size()).isEqualTo(page.dump().limit())
     }
 
@@ -85,10 +85,10 @@ class TestAvroPage {
         newRecord.put("key", "2")
         newRecord.put("value", "a".repeat(MAX_PAGE_SIZE))
         assertThrows<PageFullException> {
-            page.put(table.key.encode(newRecord), table.record.encode(newRecord))
+            page.put(newRecord)
         }
         assertThat(page.records().size).isEqualTo(1)
-        assertThat(page.get(table.key.encode(record))).isEqualTo(table.record.encode(record))
+        assertThat(page.get(record)).isEqualTo(record)
         assertThat(page.size()).isEqualTo(page.dump().limit())
     }
 }

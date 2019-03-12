@@ -1,10 +1,12 @@
 package com.riywo.ninja.bptree
 
 import PageData
+import org.apache.avro.generic.GenericRecord
 import java.nio.ByteBuffer
 
 class AvroPage private constructor(
-    private val key: AvroGenericRecord.IO,
+    private val keyIO: AvroGenericRecord.IO,
+    private val recordIO: AvroGenericRecord.IO,
     private val data: PageData,
     private var byteSize: Int
 ) : Page {
@@ -15,10 +17,9 @@ class AvroPage private constructor(
         }
 
         fun load(table: Table, byteBuffer: ByteBuffer): Page {
-            val key = table.key
             val data = PageData.fromByteBuffer(byteBuffer)
             val size = byteBuffer.limit()
-            return AvroPage(key, data, size)
+            return AvroPage(table.key, table.record, data, size)
         }
     }
 
@@ -38,7 +39,22 @@ class AvroPage private constructor(
         }
     }
 
+    override fun get(key: GenericRecord): GenericRecord? {
+        val keyByteBuffer = keyIO.encode(key)
+        val byteBuffer = get(keyByteBuffer)
+        return if (byteBuffer == null) {
+            null
+        } else {
+            val found = AvroGenericRecord(recordIO)
+            found.load(byteBuffer)
+            found
+        }
+    }
+
     override fun put(keyByteBuffer: ByteBuffer, recordByteBuffer: ByteBuffer) {
+        if (compareKeys(keyByteBuffer, recordByteBuffer) != 0) {
+            throw KeyBytesMismatchException("")
+        }
         val result = findKey(keyByteBuffer)
         when(result) {
             is FindKeyResult.Found -> update(result.index, recordByteBuffer, result.byteBuffer)
@@ -46,13 +62,24 @@ class AvroPage private constructor(
         }
     }
 
+    override fun put(record: GenericRecord) {
+        val keyByteBuffer = keyIO.encode(record)
+        val recordByteBuffer = recordIO.encode(record)
+        put(keyByteBuffer, recordByteBuffer)
+    }
+
     override fun delete(keyByteBuffer: ByteBuffer) {
         val result = findKey(keyByteBuffer)
         if (result is FindKeyResult.Found) {
             data.getRecords().removeAt(result.index)
-            byteSize -= result.byteBuffer.limit() + 1
-            if (records().isEmpty()) byteSize -= 1
+            byteSize -= result.byteBuffer.limit() + 1 // 1 == Bytes length
+            if (records().isEmpty()) byteSize -= 1 // 1 == Array length
         }
+    }
+
+    override fun delete(key: GenericRecord) {
+        val keyByteBuffer = keyIO.encode(key)
+        delete(keyByteBuffer)
     }
 
     private sealed class FindKeyResult {
@@ -64,8 +91,7 @@ class AvroPage private constructor(
         val keyBytes = keyByteBuffer.toByteArray(AVRO_RECORD_HEADER_SIZE)
         val records = records()
         records.forEachIndexed { index, byteBuffer ->
-            val bytes = byteBuffer.toByteArray(AVRO_RECORD_HEADER_SIZE)
-            when(key.compare(bytes, keyBytes)) {
+            when(compareKeys(byteBuffer, keyBytes)) {
                 0 -> return FindKeyResult.Found(index, byteBuffer)
                 1 -> return FindKeyResult.NotFound(index - 1)
             }
@@ -73,9 +99,25 @@ class AvroPage private constructor(
         return FindKeyResult.NotFound(records.size)
     }
 
+    private fun compareKeys(a: ByteBuffer, b: ByteBuffer): Int {
+        val aBytes = a.toByteArray(AVRO_RECORD_HEADER_SIZE)
+        val bBytes = b.toByteArray(AVRO_RECORD_HEADER_SIZE)
+        return keyIO.compare(aBytes, bBytes)
+    }
+
+    private fun compareKeys(a: ByteBuffer, bBytes: ByteArray): Int {
+        val aBytes = a.toByteArray(AVRO_RECORD_HEADER_SIZE)
+        return keyIO.compare(aBytes, bBytes)
+    }
+
+    private fun compareKeys(aBytes: ByteArray, b: ByteBuffer): Int {
+        val bBytes = b.toByteArray(AVRO_RECORD_HEADER_SIZE)
+        return keyIO.compare(aBytes, bBytes)
+    }
+
     private fun insert(index: Int, byteBuffer: ByteBuffer) {
-        var newByteSize = byteSize + byteBuffer.limit() + 1
-        if (records().isEmpty()) newByteSize += 1
+        var newByteSize = byteSize + byteBuffer.limit() + 1 // 1 == Bytes length
+        if (records().isEmpty()) newByteSize += 1 // 1 == Array length
         if (newByteSize > MAX_PAGE_SIZE) {
             throw PageFullException("Can't insert record")
         } else {

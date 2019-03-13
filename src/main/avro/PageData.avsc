@@ -3,6 +3,9 @@
   "type": "record",
   "fields": [
     {"name": "id", "type": "int"},
+    {"name": "sentinelId", "type": "int"},
+    {"name": "previousId", "type": "int"},
+    {"name": "nextId", "type": "int"},
     {"name": "records", "type": {"type": "array", "items": "bytes"} }
   ]
 }

@@ -107,4 +107,17 @@ class TestAvroPage {
         assertThat(pageLoaded.dump()).isEqualTo(page.dump())
         assertThat(pageLoaded.sentinelId).isEqualTo(page.sentinelId!!)
     }
+
+    @Test
+    fun `put lots of records`() {
+        val num = 100
+        for (i in 2..num) {
+            val newRecord = table.Record()
+            newRecord.put("key", "$i")
+            newRecord.put("value", "$i")
+            page.put(newRecord)
+        }
+        assertThat(page.records.size).isEqualTo(num)
+        assertThat(page.size).isEqualTo(page.dump().limit())
+    }
 }

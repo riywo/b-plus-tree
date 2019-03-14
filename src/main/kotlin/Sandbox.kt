@@ -1,7 +1,8 @@
 package com.riywo.ninja.bptree
 
-import org.apache.avro.Schema
-import java.nio.ByteBuffer
-
 fun main() {
+    println(0.toAvroBytesSize())
+    println(1.toAvroBytesSize())
+    println((-1).toAvroBytesSize())
+    println(64.toAvroBytesSize())
 }

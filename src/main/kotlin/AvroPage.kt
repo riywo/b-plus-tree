@@ -4,23 +4,26 @@ import PageData
 import org.apache.avro.generic.GenericRecord
 import java.nio.ByteBuffer
 
-class AvroPage private constructor(
+class AvroPage(
     private val keyIO: AvroGenericRecord.IO,
     private val recordIO: AvroGenericRecord.IO,
     private val data: PageData,
-    private var byteSize: Int
+    private var byteSize: Int = 0
 ) : Page {
     companion object {
         fun new(key: AvroGenericRecord.IO, record: AvroGenericRecord.IO, id: Int): Page {
             val data = createPageData(id)
-            return load(key, record, data.toByteBuffer())
+            return AvroPage(key, record, data)
         }
 
         fun load(key: AvroGenericRecord.IO, record: AvroGenericRecord.IO, byteBuffer: ByteBuffer): Page {
             val data = PageData.fromByteBuffer(byteBuffer)
-            val size = byteBuffer.limit()
-            return AvroPage(key, record, data, size)
+            return AvroPage(key, record, data, byteBuffer.limit())
         }
+    }
+
+    init {
+        if (byteSize == 0) byteSize = dump().limit()
     }
 
     override val id: Int by data
@@ -65,10 +68,19 @@ class AvroPage private constructor(
         val keyByteBuffer = keyIO.encode(key)
         val result = findKey(keyByteBuffer)
         if (result is FindKeyResult.Found) {
+            byteSize = calcPageSize(-result.byteBuffer.toAvroBytesSize(), -1)
             data.getRecords().removeAt(result.index)
-            byteSize -= result.byteBuffer.limit() + 1 // 1 == Bytes length
-            if (records.isEmpty()) byteSize -= 1 // 1 == Array length
         }
+    }
+
+    private fun calcPageSize(changingBytes: Int, changingLength: Int = 0): Int {
+        return byteSize + changingBytes + calcChangingLengthBytes(changingLength)
+    }
+
+    private fun calcChangingLengthBytes(changingLength: Int): Int {
+        if (changingLength == 0) return 0
+        val newLength = records.size + changingLength
+        return newLength.toLengthAvroByteSize() - records.size.toLengthAvroByteSize()
     }
 
     private sealed class FindKeyResult {
@@ -90,24 +102,23 @@ class AvroPage private constructor(
     }
 
     private fun insert(index: Int, byteBuffer: ByteBuffer) {
-        var newByteSize = byteSize + byteBuffer.limit() + 1 // 1 == Bytes length
-        if (records.isEmpty()) newByteSize += 1 // 1 == Array length
+        val newByteSize = calcPageSize(byteBuffer.toAvroBytesSize(), 1)
         if (newByteSize > MAX_PAGE_SIZE) {
             throw PageFullException("Can't insert record")
         } else {
-            data.getRecords().add(index, byteBuffer)
             byteSize = newByteSize
+            data.getRecords().add(index, byteBuffer)
         }
     }
 
     private fun update(index: Int, newByteBuffer: ByteBuffer, oldByteBuffer: ByteBuffer) {
-        val newByteSize = byteSize + newByteBuffer.limit() - oldByteBuffer.limit()
+        val newByteSize = calcPageSize(newByteBuffer.toAvroBytesSize() - oldByteBuffer.toAvroBytesSize())
         if (newByteSize > MAX_PAGE_SIZE) {
             throw PageFullException("Can't update record")
         } else {
             // TODO merge new and old
-            data.getRecords()[index] = newByteBuffer
             byteSize = newByteSize
+            data.getRecords()[index] = newByteBuffer
         }
     }
 }

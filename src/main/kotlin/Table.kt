@@ -24,7 +24,8 @@ class Table(schema: Schema) {
         val keySchema = Schema.createRecord(keyFields.map(newField))
         key = AvroGenericRecord.IO(keySchema)
 
-        val idField = Schema.Field(AVRO_PAGE_ID_FIELD_NAME, SchemaBuilder.builder().intType(), "", 0, Schema.Field.Order.IGNORE)
+        val idField = Schema.Field(INTERNAL_ID_FIELD_NAME,
+            SchemaBuilder.builder().intType(), "", 0, Schema.Field.Order.IGNORE)
         val internalSchema = Schema.createRecord((keyFields + idField).map(newField))
         internal = AvroGenericRecord.IO(internalSchema)
     }

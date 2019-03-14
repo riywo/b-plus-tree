@@ -5,11 +5,11 @@ import java.nio.ByteBuffer
 
 interface Page {
     val id: Int
-    val size: Int
-    val recordsSize: Int
     var sentinelId: Int?
     var previousId: Int?
     var nextId: Int?
+    val records: List<ByteBuffer>
+    val size: Int
 
     fun dump(): ByteBuffer
     fun records(): List<GenericRecord>

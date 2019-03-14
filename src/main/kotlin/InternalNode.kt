@@ -1,6 +1,5 @@
 package com.riywo.ninja.bptree
 
-import org.apache.avro.generic.GenericRecord
 import java.nio.ByteBuffer
 
 data class InternalNode(private val page: Page) : Page by page {

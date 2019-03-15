@@ -7,7 +7,7 @@ import org.apache.avro.SchemaBuilder
 
 class TestAvroPage {
     private val schema = SchemaBuilder.builder().record("foo").fields()
-        .name("key").type().stringType().noDefault()
+        .name("key").type().intType().noDefault()
         .name("value").orderIgnore().type().stringType().noDefault()
         .endRecord()
     private val table = Table(schema)
@@ -16,7 +16,7 @@ class TestAvroPage {
     private val record = table.Record()
 
     init {
-        record.put("key", "1")
+        record.put("key", 1)
         record.put("value", "a")
         page.put(record)
     }
@@ -51,7 +51,7 @@ class TestAvroPage {
     @Test
     fun `insert record`() {
         val recordInserted = table.Record()
-        recordInserted.put("key", "2")
+        recordInserted.put("key", 2)
         recordInserted.put("value", "b")
         page.put(recordInserted)
 
@@ -64,7 +64,7 @@ class TestAvroPage {
     @Test
     fun `update record`() {
         val recordUpdated = table.Record()
-        recordUpdated.put("key", "1")
+        recordUpdated.put("key", 1)
         recordUpdated.put("value", "b")
         page.put(recordUpdated)
 
@@ -86,7 +86,7 @@ class TestAvroPage {
     @Test
     fun `can't put record`() {
         val newRecord = table.Record()
-        newRecord.put("key", "2")
+        newRecord.put("key", 2)
         newRecord.put("value", "a".repeat(MAX_PAGE_SIZE))
         assertThrows<PageFullException> {
             page.put(newRecord)
@@ -109,14 +109,29 @@ class TestAvroPage {
     }
 
     @Test
-    fun `put lots of records`() {
+    fun `insert ordered`() {
         val num = 100
         for (i in 2..num) {
             val newRecord = table.Record()
-            newRecord.put("key", "$i")
+            newRecord.put("key", i)
             newRecord.put("value", "$i")
             page.put(newRecord)
         }
+        assertThat(page.records().map{it.get("key")}).isEqualTo((1..num).toList())
+        assertThat(page.records.size).isEqualTo(num)
+        assertThat(page.size).isEqualTo(page.dump().limit())
+    }
+
+    @Test
+    fun `insert reversed`() {
+        val num = 100
+        for (i in num downTo 2) {
+            val newRecord = table.Record()
+            newRecord.put("key", i)
+            newRecord.put("value", "$i")
+            page.put(newRecord)
+        }
+        assertThat(page.records().map{it.get("key")}).isEqualTo((1..num).toList())
         assertThat(page.records.size).isEqualTo(num)
         assertThat(page.size).isEqualTo(page.dump().limit())
     }

@@ -11,7 +11,7 @@ data class InternalNode(private val page: Page) : Page by page {
             InternalNode(AvroPage.load(table.key, table.internal, byteBuffer))
     }
 
-    private fun findChildPageIdFor(key: GenericRecord): Int? {
+    private fun findChildPageId(key: GenericRecord): Int? {
         return get(key)?.get(INTERNAL_ID_FIELD_NAME) as? Int
     }
 }

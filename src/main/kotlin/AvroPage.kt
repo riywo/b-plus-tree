@@ -45,12 +45,12 @@ class AvroPage(
         val keyByteBuffer = keyIO.encode(key)
         val result = findKey(keyByteBuffer)
         return when(result) {
-            is FindKeyResult.Found -> {
+            is FindKeyResult.ExactMatch -> {
                 val found = AvroGenericRecord(recordIO)
                 found.load(result.byteBuffer)
                 found
             }
-            is FindKeyResult.NotFound -> null
+            else -> null
         }
     }
 
@@ -59,15 +59,16 @@ class AvroPage(
         val recordByteBuffer = recordIO.encode(record)
         val result = findKey(keyByteBuffer)
         when(result) {
-            is FindKeyResult.Found -> update(result.index, recordByteBuffer, result.byteBuffer)
-            is FindKeyResult.NotFound -> insert(result.lastIndex, recordByteBuffer)
+            is FindKeyResult.ExactMatch -> update(result.index, recordByteBuffer, result.byteBuffer)
+            is FindKeyResult.LeftMatch -> insert(result.index, recordByteBuffer)
+            is FindKeyResult.RightMatch -> insert(result.index, recordByteBuffer)
         }
     }
 
     override fun delete(key: GenericRecord) {
         val keyByteBuffer = keyIO.encode(key)
         val result = findKey(keyByteBuffer)
-        if (result is FindKeyResult.Found) {
+        if (result is FindKeyResult.ExactMatch) {
             byteSize = calcPageSize(-result.byteBuffer.toAvroBytesSize(), -1)
             data.getRecords().removeAt(result.index)
         }
@@ -84,8 +85,9 @@ class AvroPage(
     }
 
     private sealed class FindKeyResult {
-        data class Found(val index: Int, val byteBuffer: ByteBuffer) : FindKeyResult()
-        data class NotFound(val lastIndex: Int): FindKeyResult()
+        class ExactMatch(val index: Int, val byteBuffer: ByteBuffer) : FindKeyResult()
+        class LeftMatch(val index: Int, val byteBuffer: ByteBuffer) : FindKeyResult()
+        class RightMatch(val index: Int) : FindKeyResult()
     }
 
     private fun findKey(keyByteBuffer: ByteBuffer): FindKeyResult {
@@ -94,11 +96,11 @@ class AvroPage(
         data.getRecords().forEachIndexed { index, byteBuffer ->
             val bytes = byteBuffer.toByteArray(AVRO_RECORD_HEADER_SIZE)
             when(keyIO.compare(bytes, keyBytes)) {
-                0 -> return FindKeyResult.Found(index, byteBuffer)
-                1 -> return FindKeyResult.NotFound(index - 1)
+                0 -> return FindKeyResult.ExactMatch(index, byteBuffer)
+                1 -> return FindKeyResult.LeftMatch(index, byteBuffer)
             }
         }
-        return FindKeyResult.NotFound(records.size)
+        return FindKeyResult.RightMatch(records.size)
     }
 
     private fun insert(index: Int, byteBuffer: ByteBuffer) {

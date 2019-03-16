@@ -17,7 +17,6 @@ class TestLeafNode {
     init {
         record.put("key", 1)
         record.put("value", "a")
-        node.put(record)
     }
 
     @BeforeEach

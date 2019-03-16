@@ -11,4 +11,6 @@ class InternalNode(table: Table, page: AvroPage) : Node(table.key, table.interna
             is FindResult.RightMatch -> page.sentinelId
         } as Int
     }
+
+
 }

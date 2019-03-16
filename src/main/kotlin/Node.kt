@@ -21,29 +21,6 @@ abstract class Node(
         record
     }
 
-    fun get(key: GenericRecord): GenericRecord? {
-        val result = find(key)
-        return when (result) {
-            is FindResult.ExactMatch -> createRecord(result.byteBuffer)
-            else -> null
-        }
-    }
-
-    fun put(record: GenericRecord) {
-        val recordByteBuffer = recordIO.encode(record)
-        val result = find(record)
-        when(result) { // TODO merge new and old record
-            is FindResult.ExactMatch -> page.update(result.index, recordByteBuffer)
-            is FindResult.LeftMatch -> page.insert(result.index, recordByteBuffer)
-            is FindResult.RightMatch -> page.insert(result.index, recordByteBuffer)
-        }
-    }
-
-    fun delete(key: GenericRecord) {
-        val result = find(key)
-        if (result is FindResult.ExactMatch) page.delete(result.index)
-    }
-
     protected sealed class FindResult {
         data class ExactMatch(val index: Int, val byteBuffer: ByteBuffer) : FindResult()
         data class LeftMatch(val index: Int, val byteBuffer: ByteBuffer) : FindResult()
@@ -67,5 +44,9 @@ abstract class Node(
         val record = AvroGenericRecord(recordIO)
         record.load(byteBuffer)
         return record
+    }
+
+    protected fun encodeRecord(record: GenericRecord): ByteBuffer {
+        return recordIO.encode(record)
     }
 }

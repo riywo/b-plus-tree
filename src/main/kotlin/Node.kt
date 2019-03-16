@@ -33,7 +33,7 @@ abstract class Node(
         val recordByteBuffer = recordIO.encode(record)
         val result = find(record)
         when(result) { // TODO merge new and old record
-            is FindResult.ExactMatch -> page.update(result.index, recordByteBuffer, result.byteBuffer)
+            is FindResult.ExactMatch -> page.update(result.index, recordByteBuffer)
             is FindResult.LeftMatch -> page.insert(result.index, recordByteBuffer)
             is FindResult.RightMatch -> page.insert(result.index, recordByteBuffer)
         }
@@ -41,7 +41,7 @@ abstract class Node(
 
     fun delete(key: GenericRecord) {
         val result = find(key)
-        if (result is FindResult.ExactMatch) page.delete(result.index, result.byteBuffer)
+        if (result is FindResult.ExactMatch) page.delete(result.index)
     }
 
     protected sealed class FindResult {

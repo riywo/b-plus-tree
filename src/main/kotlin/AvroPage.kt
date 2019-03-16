@@ -3,7 +3,7 @@ package com.riywo.ninja.bptree
 import PageData
 import java.nio.ByteBuffer
 
-class AvroPage(
+class AvroPage private constructor(
     private val data: PageData,
     private var byteSize: Int = 0
 ) {
@@ -37,24 +37,27 @@ class AvroPage(
         if (newByteSize > MAX_PAGE_SIZE) {
             throw PageFullException("Can't insert record")
         } else {
-            byteSize = newByteSize
             data.getRecords().add(index, byteBuffer)
+            byteSize = newByteSize
         }
     }
 
-    fun update(index: Int, newByteBuffer: ByteBuffer, oldByteBuffer: ByteBuffer) {
+    fun update(index: Int, newByteBuffer: ByteBuffer) {
+        val oldByteBuffer = data.getRecords()[index]
         val newByteSize = calcPageSize(newByteBuffer.toAvroBytesSize() - oldByteBuffer.toAvroBytesSize())
         if (newByteSize > MAX_PAGE_SIZE) {
             throw PageFullException("Can't update record")
         } else {
-            byteSize = newByteSize
             data.getRecords()[index] = newByteBuffer
+            byteSize = newByteSize
         }
     }
 
-    fun delete(index: Int, byteBuffer: ByteBuffer) {
-        byteSize = calcPageSize(-byteBuffer.toAvroBytesSize(), -1)
+    fun delete(index: Int) {
+        val byteBuffer = data.getRecords()[index]
+        val newByteSize = calcPageSize(-byteBuffer.toAvroBytesSize(), -1)
         data.getRecords().removeAt(index)
+        byteSize = newByteSize
     }
 
     private fun calcPageSize(changingBytes: Int, changingLength: Int = 0): Int {

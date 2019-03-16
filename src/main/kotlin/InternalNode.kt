@@ -2,7 +2,7 @@ package com.riywo.ninja.bptree
 
 import java.lang.Exception
 
-class InternalNode(table: Table, page: AvroPage) : Node(table.key, table.internal, page) {
+class InternalNode(table: Table, page: Page) : Node(table.key, table.internal, page) {
     fun findChildPageId(key: AvroGenericRecord): Int {
         val result = find(key)
         return when (result) {
@@ -25,7 +25,7 @@ class InternalNode(table: Table, page: AvroPage) : Node(table.key, table.interna
         page.insert(0, internal.toByteBuffer())
     }
 
-    fun addChildNode(node: Node) {
+    fun addChildNode(node: Node, pageManager: NodeManager) {
         val internal = createRecord(node.records.last())
         val result = find(internal)
         when (result) {

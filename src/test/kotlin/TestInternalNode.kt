@@ -16,13 +16,13 @@ class TestInternalNode {
     private fun createInternalNode(): InternalNode {
         val leftLeafNode = createLeafNode(0, 1)
         val rightLeafNode = createLeafNode(1, 2)
-        val node = InternalNode(table, AvroPage.new(2, NodeType.InternalNode))
+        val node = InternalNode(table, Page.new(2, NodeType.InternalNode))
         node.initialize(leftLeafNode, rightLeafNode)
         return node
     }
 
     private fun createLeafNode(id: Int, key: Int): LeafNode {
-        val node = LeafNode(table, AvroPage.new(id, NodeType.LeafNode))
+        val node = LeafNode(table, Page.new(id, NodeType.LeafNode))
         val record = createRecord(key)
         node.put(record)
         return node
@@ -49,7 +49,7 @@ class TestInternalNode {
 
     @Test
     fun `dump and load`() {
-        val nodeLoaded = LeafNode(table, AvroPage.load(node.dump()))
+        val nodeLoaded = LeafNode(table, Page.load(node.dump()))
         assertThat(nodeLoaded.id).isEqualTo(node.id)
         assertThat(nodeLoaded.dump()).isEqualTo(node.dump())
     }

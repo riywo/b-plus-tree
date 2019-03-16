@@ -4,19 +4,19 @@ import PageData
 import NodeType
 import java.nio.ByteBuffer
 
-class AvroPage private constructor(
+class Page private constructor(
     private val data: PageData,
     private var byteSize: Int = 0
 ) {
     companion object {
-        fun new(id: Int, nodeType: NodeType): AvroPage {
+        fun new(id: Int, nodeType: NodeType): Page {
             val data = createPageData(id, nodeType)
-            return AvroPage(data)
+            return Page(data)
         }
 
-        fun load(byteBuffer: ByteBuffer): AvroPage {
+        fun load(byteBuffer: ByteBuffer): Page {
             val data = PageData.fromByteBuffer(byteBuffer)
-            return AvroPage(data, byteBuffer.limit())
+            return Page(data, byteBuffer.limit())
         }
     }
 

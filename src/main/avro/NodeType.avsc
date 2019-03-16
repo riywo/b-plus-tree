@@ -1,5 +1,5 @@
 {
   "name": "NodeType",
   "type": "enum",
-  "symbols": ["RootNode", "InternalNode", "LeafNode"]
+  "symbols": ["InternalNode", "LeafNode"]
 }

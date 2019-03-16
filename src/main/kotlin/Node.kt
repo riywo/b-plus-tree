@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 abstract class Node(
     private val keyIO: AvroGenericRecord.IO,
     private val recordIO: AvroGenericRecord.IO,
-    protected val page: AvroPage
+    protected val page: Page
 ) {
     val id get() = page.id
     val type get() = page.nodeType

@@ -12,7 +12,7 @@ class TestLeafNode {
         .name("value").orderIgnore().type().stringType().noDefault()
         .endRecord()
     private val table = Table(schema)
-    private var node = LeafNode(table, AvroPage.new(1, NodeType.LeafNode))
+    private var node = LeafNode(table, Page.new(1, NodeType.LeafNode))
     private val record = table.Record()
 
     init {
@@ -22,7 +22,7 @@ class TestLeafNode {
 
     @BeforeEach
     fun init() {
-        node = LeafNode(table, AvroPage.new(1, NodeType.LeafNode))
+        node = LeafNode(table, Page.new(1, NodeType.LeafNode))
         node.put(record)
         assertThat(node.id).isEqualTo(1)
         assertThat(node.type).isEqualTo(NodeType.LeafNode)
@@ -34,7 +34,7 @@ class TestLeafNode {
 
     @Test
     fun `dump and load`() {
-        val nodeLoaded = LeafNode(table, AvroPage.load(node.dump()))
+        val nodeLoaded = LeafNode(table, Page.load(node.dump()))
         assertThat(nodeLoaded.id).isEqualTo(node.id)
         assertThat(nodeLoaded.dump()).isEqualTo(node.dump())
     }

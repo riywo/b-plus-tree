@@ -6,13 +6,13 @@ import org.assertj.core.api.Assertions.*
 import java.lang.IndexOutOfBoundsException
 import java.nio.ByteBuffer
 
-class TestAvroPage {
-    private var page = AvroPage.new(1, NodeType.LeafNode)
+class TestPage {
+    private var page = Page.new(1, NodeType.LeafNode)
     private val byteBuffer = ByteBuffer.allocate(10)
 
     @BeforeEach
     fun init() {
-        page = AvroPage.new(1, NodeType.LeafNode)
+        page = Page.new(1, NodeType.LeafNode)
         page.insert(0, byteBuffer)
         assertThat(page.id).isEqualTo(1)
         assertThat(page.nodeType).isEqualTo(NodeType.LeafNode)
@@ -26,7 +26,7 @@ class TestAvroPage {
 
     @Test
     fun `dump and load`() {
-        val pageLoaded = AvroPage.load(page.dump())
+        val pageLoaded = Page.load(page.dump())
         assertThat(pageLoaded.id).isEqualTo(page.id)
         assertThat(pageLoaded.dump()).isEqualTo(page.dump())
     }
@@ -108,7 +108,7 @@ class TestAvroPage {
         assertThat(page.sentinelId!!).isEqualTo(1)
         assertThat(page.size).isEqualTo(page.dump().limit())
 
-        val pageLoaded = AvroPage.load(page.dump())
+        val pageLoaded = Page.load(page.dump())
         assertThat(pageLoaded.sentinelId).isEqualTo(1)
         assertThat(pageLoaded.dump()).isEqualTo(page.dump())
 
@@ -117,7 +117,7 @@ class TestAvroPage {
         assertThat(newSentinelId).isEqualTo(null)
         assertThat(page.size).isEqualTo(page.dump().limit())
 
-        val pageLoaded2 = AvroPage.load(page.dump())
+        val pageLoaded2 = Page.load(page.dump())
         assertThat(pageLoaded2.sentinelId).isEqualTo(null)
         assertThat(pageLoaded2.dump()).isEqualTo(page.dump())
     }

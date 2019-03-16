@@ -8,6 +8,7 @@ abstract class Node(
     protected val page: AvroPage
 ) {
     val id get() = page.id
+    val type get() = page.nodeType
     val previousId get() = page.previousId
     val nextId get() = page.nextId
     val size get() = page.size

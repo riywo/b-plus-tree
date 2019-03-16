@@ -1,5 +1,6 @@
 package com.riywo.ninja.bptree
 
+import NodeType
 import org.junit.jupiter.api.*
 import org.assertj.core.api.Assertions.*
 
@@ -11,7 +12,7 @@ class TestLeafNode {
         .name("value").orderIgnore().type().stringType().noDefault()
         .endRecord()
     private val table = Table(schema)
-    private var node = LeafNode(table, AvroPage.new(1))
+    private var node = LeafNode(table, AvroPage.new(1, NodeType.LeafNode))
     private val record = table.Record()
 
     init {
@@ -21,9 +22,10 @@ class TestLeafNode {
 
     @BeforeEach
     fun init() {
-        node = LeafNode(table, AvroPage.new(1))
+        node = LeafNode(table, AvroPage.new(1, NodeType.LeafNode))
         node.put(record)
         assertThat(node.id).isEqualTo(1)
+        assertThat(node.type).isEqualTo(NodeType.LeafNode)
         assertThat(node.previousId).isEqualTo(null)
         assertThat(node.nextId).isEqualTo(null)
         assertThat(node.records.size).isEqualTo(1)

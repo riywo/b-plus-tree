@@ -1,6 +1,7 @@
 package com.riywo.ninja.bptree
 
 import PageData
+import NodeType
 import java.nio.ByteBuffer
 
 class AvroPage private constructor(
@@ -8,8 +9,8 @@ class AvroPage private constructor(
     private var byteSize: Int = 0
 ) {
     companion object {
-        fun new(id: Int): AvroPage {
-            val data = createPageData(id)
+        fun new(id: Int, nodeType: NodeType): AvroPage {
+            val data = createPageData(id, nodeType)
             return AvroPage(data)
         }
 
@@ -24,6 +25,7 @@ class AvroPage private constructor(
     }
 
     val id: Int by data
+    val nodeType: NodeType by data
     var sentinelId: Int? by data
     var previousId: Int? by data
     var nextId: Int? by data

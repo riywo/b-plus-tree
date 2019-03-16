@@ -1,19 +1,21 @@
 package com.riywo.ninja.bptree
 
+import NodeType
 import org.junit.jupiter.api.*
 import org.assertj.core.api.Assertions.*
 import java.lang.IndexOutOfBoundsException
 import java.nio.ByteBuffer
 
 class TestAvroPage {
-    private var page = AvroPage.new(1)
+    private var page = AvroPage.new(1, NodeType.LeafNode)
     private val byteBuffer = ByteBuffer.allocate(10)
 
     @BeforeEach
     fun init() {
-        page = AvroPage.new(1)
+        page = AvroPage.new(1, NodeType.LeafNode)
         page.insert(0, byteBuffer)
         assertThat(page.id).isEqualTo(1)
+        assertThat(page.nodeType).isEqualTo(NodeType.LeafNode)
         assertThat(page.sentinelId).isEqualTo(null)
         assertThat(page.previousId).isEqualTo(null)
         assertThat(page.nextId).isEqualTo(null)

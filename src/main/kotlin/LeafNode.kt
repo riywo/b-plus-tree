@@ -1,9 +1,7 @@
 package com.riywo.ninja.bptree
 
-import org.apache.avro.generic.GenericRecord
-
 class LeafNode(table: Table, page: AvroPage) : Node(table.key, table.record, page) {
-    fun get(key: GenericRecord): GenericRecord? {
+    fun get(key: AvroGenericRecord): AvroGenericRecord? {
         val result = find(key)
         return when (result) {
             is FindResult.ExactMatch -> createRecord(result.byteBuffer)
@@ -11,8 +9,8 @@ class LeafNode(table: Table, page: AvroPage) : Node(table.key, table.record, pag
         }
     }
 
-    fun put(record: GenericRecord) {
-        val byteBuffer = encodeRecord(record)
+    fun put(record: AvroGenericRecord) {
+        val byteBuffer = record.toByteBuffer()
         val result = find(record)
         when(result) { // TODO merge new and old record
             is FindResult.ExactMatch -> page.update(result.index, byteBuffer)
@@ -21,7 +19,7 @@ class LeafNode(table: Table, page: AvroPage) : Node(table.key, table.record, pag
         }
     }
 
-    fun delete(key: GenericRecord) {
+    fun delete(key: AvroGenericRecord) {
         val result = find(key)
         if (result is FindResult.ExactMatch) page.delete(result.index)
     }

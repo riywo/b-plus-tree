@@ -29,5 +29,20 @@ class TestAvroGenericRecord {
             assertThat(record2).isEqualTo(record1)
 
         }
+
+        @Test
+        fun `compare`() {
+            val aRecord = AvroGenericRecord(io)
+            aRecord.put("f1", "a")
+            val bRecord = AvroGenericRecord(io)
+            bRecord.put("f1", "b")
+
+            val a = aRecord.toByteBuffer().toByteArray()
+            val b = bRecord.toByteBuffer().toByteArray()
+
+            assertThat(io.compare(a, a)).isEqualTo(0)
+            assertThat(io.compare(a, b)).isEqualTo(-1)
+            assertThat(io.compare(b, a)).isEqualTo(1)
+        }
     }
 }

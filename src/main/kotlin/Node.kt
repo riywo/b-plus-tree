@@ -1,6 +1,5 @@
 package com.riywo.ninja.bptree
 
-import org.apache.avro.generic.GenericRecord
 import java.nio.ByteBuffer
 
 abstract class Node(
@@ -12,14 +11,9 @@ abstract class Node(
     val previousId get() = page.previousId
     val nextId get() = page.nextId
     val size get() = page.size
+    val records get() = page.records
 
     fun dump() = page.dump()
-
-    fun getRecords(): List<GenericRecord> = page.records.map {
-        val record = AvroGenericRecord(recordIO)
-        recordIO.decode(record, it)
-        record
-    }
 
     protected sealed class FindResult {
         data class ExactMatch(val index: Int, val byteBuffer: ByteBuffer) : FindResult()
@@ -27,17 +21,32 @@ abstract class Node(
         data class RightMatch(val index: Int) : FindResult()
     }
 
-    protected fun find(key: GenericRecord): FindResult {
+    protected fun find(key: AvroGenericRecord): FindResult {
         val keyByteBuffer = keyIO.encode(key)
-        val keyBytes = keyByteBuffer.toByteArray(AVRO_RECORD_HEADER_SIZE)
+        val keyBytes = keyByteBuffer.toByteArray()
         page.records.forEachIndexed { index, byteBuffer ->
-            val bytes = byteBuffer.toByteArray(AVRO_RECORD_HEADER_SIZE)
-            when(keyIO.compare(bytes, keyBytes)) {
+            when(compareKeys(byteBuffer, keyBytes)) {
                 0 -> return FindResult.ExactMatch(index, byteBuffer)
                 1 -> return FindResult.LeftMatch(index, byteBuffer)
             }
         }
         return FindResult.RightMatch(page.records.size)
+    }
+
+    protected fun compareKeys(aByteBuffer: ByteBuffer, bByteBuffer: ByteBuffer): Int {
+        val aBytes = aByteBuffer.toByteArray()
+        val bBytes = bByteBuffer.toByteArray()
+        return keyIO.compare(aBytes, bBytes)
+    }
+
+    protected fun compareKeys(aBytes: ByteArray, bByteBuffer: ByteBuffer): Int {
+        val bBytes = bByteBuffer.toByteArray()
+        return keyIO.compare(aBytes, bBytes)
+    }
+
+    protected fun compareKeys(aByteBuffer: ByteBuffer, bBytes: ByteArray): Int {
+        val aBytes = aByteBuffer.toByteArray()
+        return keyIO.compare(aBytes, bBytes)
     }
 
     protected fun createRecord(byteBuffer: ByteBuffer): AvroGenericRecord {
@@ -46,7 +55,9 @@ abstract class Node(
         return record
     }
 
-    protected fun encodeRecord(record: GenericRecord): ByteBuffer {
-        return recordIO.encode(record)
+    protected fun createKey(byteBuffer: ByteBuffer): AvroGenericRecord {
+        val record = AvroGenericRecord(keyIO)
+        record.load(byteBuffer)
+        return record
     }
 }

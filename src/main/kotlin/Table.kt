@@ -2,6 +2,7 @@ package com.riywo.ninja.bptree
 
 import org.apache.avro.Schema
 import org.apache.avro.SchemaBuilder
+import java.nio.ByteBuffer
 
 class Table(schema: Schema) {
     val key: AvroGenericRecord.IO
@@ -16,6 +17,9 @@ class Table(schema: Schema) {
         if (keyFields.isEmpty()) {
             throw IllegalArgumentException("At least the first field must be ordered: $schema")
         }
+        if (valueFields.isEmpty()) {
+            throw IllegalArgumentException("At least one order ignored field is required: $schema")
+        }
         if (valueFields.any(isOrdered)) {
             throw IllegalArgumentException("No ordered field is allowed after the first ignored field: $schema")
         }
@@ -28,6 +32,18 @@ class Table(schema: Schema) {
             SchemaBuilder.builder().intType(), "", 0, Schema.Field.Order.IGNORE)
         val internalSchema = Schema.createRecord((keyFields + idField).map(newField))
         internal = AvroGenericRecord.IO(internalSchema)
+    }
+
+    fun createRecord(byteBuffer: ByteBuffer): Record {
+        val record = Record()
+        record.load(byteBuffer)
+        return record
+    }
+
+    fun createKey(byteBuffer: ByteBuffer): Key {
+        val record = Key()
+        record.load(byteBuffer)
+        return record
     }
 
     inner class Record : AvroGenericRecord(record)

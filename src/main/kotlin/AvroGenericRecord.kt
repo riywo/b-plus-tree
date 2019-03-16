@@ -4,16 +4,17 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.*
 import org.apache.avro.io.*
 import org.apache.avro.message.*
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
 open class AvroGenericRecord(private val io: IO) : GenericData.Record(io.schema) {
-    fun load(input: ByteArrayInputStream) {
-        io.decode(this, input)
-    }
-
     fun load(byteBuffer: ByteBuffer) {
         io.decode(this, byteBuffer)
+    }
+
+    fun toByteBuffer(): ByteBuffer {
+        return io.encode(this)
     }
 
     class IO(val schema: Schema) {
@@ -23,23 +24,23 @@ open class AvroGenericRecord(private val io: IO) : GenericData.Record(io.schema)
             }
         }
 
-        private val encoder = BinaryMessageEncoder<GenericRecord>(GenericData(), schema)
-        private val decoder = BinaryMessageDecoder<GenericRecord>(GenericData(), schema)
+        private val writer = GenericDatumWriter<GenericRecord>(schema)
+        private val reader = GenericDatumReader<GenericRecord>(schema)
 
-        fun encode(record: GenericRecord, output: OutputStream) {
-            encoder.encode(record, output)
+        private var encoder: BinaryEncoder? = null
+        private var decoder: BinaryDecoder? = null
+
+        fun encode(record: AvroGenericRecord): ByteBuffer {
+            val output = ByteArrayOutputStream()
+            encoder = EncoderFactory.get().binaryEncoder(output, encoder)
+            writer.write(record, encoder)
+            encoder?.flush()
+            return output.toByteArray().toByteBuffer()
         }
 
-        fun encode(record: GenericRecord): ByteBuffer {
-            return encoder.encode(record)
-        }
-
-        fun decode(record: GenericRecord, input: InputStream) {
-            decoder.decode(input, record)
-        }
-
-        fun decode(record: GenericRecord, byteBuffer: ByteBuffer) {
-            decoder.decode(byteBuffer, record)
+        fun decode(record: AvroGenericRecord, byteBuffer: ByteBuffer) {
+            decoder = DecoderFactory.get().binaryDecoder(byteBuffer.toByteArray(), decoder)
+            reader.read(record, decoder)
         }
 
         fun compare(a: ByteArray, b: ByteArray): Int {

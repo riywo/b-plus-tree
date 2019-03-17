@@ -14,8 +14,8 @@ class LeafNode(table: Table, page: Page) : Node(table.key, table.record, page) {
         val result = find(record)
         when(result) { // TODO merge new and old record
             is FindResult.ExactMatch -> page.update(result.index, byteBuffer)
-            is FindResult.LeftMatch -> page.insert(result.index, byteBuffer)
-            is FindResult.RightMatch -> page.insert(result.index, byteBuffer)
+            is FindResult.FirstGraterThanMatch -> page.insert(result.index, byteBuffer)
+            null -> page.insert(0, byteBuffer)
         }
     }
 

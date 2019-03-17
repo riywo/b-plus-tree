@@ -16,7 +16,6 @@ class TestPage {
         page.insert(0, byteBuffer)
         assertThat(page.id).isEqualTo(1)
         assertThat(page.nodeType).isEqualTo(NodeType.LeafNode)
-        assertThat(page.sentinelId).isEqualTo(null)
         assertThat(page.previousId).isEqualTo(null)
         assertThat(page.nextId).isEqualTo(null)
         assertThat(page.records.size).isEqualTo(1)
@@ -103,22 +102,22 @@ class TestPage {
     }
 
     @Test
-    fun `manipulate sentinelId`() {
-        page.sentinelId = 1
-        assertThat(page.sentinelId!!).isEqualTo(1)
+    fun `manipulate previousId`() {
+        page.previousId = 1
+        assertThat(page.previousId!!).isEqualTo(1)
         assertThat(page.size).isEqualTo(page.dump().limit())
 
         val pageLoaded = Page.load(page.dump())
-        assertThat(pageLoaded.sentinelId).isEqualTo(1)
+        assertThat(pageLoaded.previousId).isEqualTo(1)
         assertThat(pageLoaded.dump()).isEqualTo(page.dump())
 
-        page.sentinelId = null
-        val newSentinelId = page.sentinelId
+        page.previousId = null
+        val newSentinelId = page.previousId
         assertThat(newSentinelId).isEqualTo(null)
         assertThat(page.size).isEqualTo(page.dump().limit())
 
         val pageLoaded2 = Page.load(page.dump())
-        assertThat(pageLoaded2.sentinelId).isEqualTo(null)
+        assertThat(pageLoaded2.previousId).isEqualTo(null)
         assertThat(pageLoaded2.dump()).isEqualTo(page.dump())
     }
 }

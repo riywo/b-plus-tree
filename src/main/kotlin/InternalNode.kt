@@ -1,45 +1,40 @@
 package com.riywo.ninja.bptree
 
 import java.lang.Exception
+import java.nio.ByteBuffer
 
 class InternalNode(table: Table, page: Page) : Node(table.key, table.internal, page) {
-    fun findChildPageId(key: AvroGenericRecord): Int {
+    fun findChildPageId(key: AvroGenericRecord): Int? {
         val result = find(key)
         return when (result) {
-            is FindResult.ExactMatch -> createRecord(result.byteBuffer).get(INTERNAL_ID_FIELD_NAME)
-            is FindResult.LeftMatch -> createRecord(result.byteBuffer).get(INTERNAL_ID_FIELD_NAME)
-            is FindResult.RightMatch -> page.sentinelId
-        } as Int
-    }
-
-    fun initialize(leftNode: Node, rightNode: Node) {
-        if (page.records.isNotEmpty()) throw NodeAlreadyInitializedException("")
-        if (leftNode.records.isEmpty()) throw NodeNotInitializedException("")
-        if (rightNode.records.isEmpty()) throw NodeNotInitializedException("")
-        if (compareKeys(leftNode.records.last(), rightNode.records.first()) != -1) {
-            throw InternalNodeInitializeException("")
+            is FindResult.ExactMatch -> getChildPageId(result.byteBuffer)
+            is FindResult.FirstGraterThanMatch -> {
+                if (result.index == 0 && previousId != null)
+                    throw Exception() // TODO
+                val index = if (result.index == 0) 0 else result.index-1
+                getChildPageId(page.records[index])
+            }
+            null -> null
         }
-        page.sentinelId = rightNode.id
-        val internal = createRecord(leftNode.records.last())
-        internal.put(INTERNAL_ID_FIELD_NAME, leftNode.id)
-        page.insert(0, internal.toByteBuffer())
     }
 
-    fun addChildNode(node: Node, pageManager: NodeManager) {
-        val internal = createRecord(node.records.last())
-        val result = find(internal)
+    fun addChildNode(node: Node) {
+        val record = createInternalRecord(node.minRecord, node.id)
+        val result = find(record)
         when (result) {
-            is FindResult.LeftMatch -> {
-                // TODO
-            }
-            is FindResult.RightMatch -> {
-                if (page.sentinelId == null) { // Initialization
-                    page.sentinelId = node.id
-                } else {
-                    // TODO
-                }
-            }
-            is FindResult.ExactMatch -> throw Exception()
+            is FindResult.FirstGraterThanMatch -> page.insert(result.index, record.toByteBuffer())
+            null -> page.insert(0, record.toByteBuffer())
+            else -> throw Exception() // TODO
         }
+    }
+
+    private fun getChildPageId(byteBuffer: ByteBuffer): Int {
+        return createRecord(byteBuffer).get(INTERNAL_ID_FIELD_NAME) as Int
+    }
+
+    private fun createInternalRecord(byteBuffer: ByteBuffer, childId: Int): AvroGenericRecord {
+        val internal = createRecord(byteBuffer)
+        internal.put(INTERNAL_ID_FIELD_NAME, childId)
+        return internal
     }
 }

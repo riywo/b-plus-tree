@@ -13,11 +13,17 @@ class TestInternalNode {
     private val table = Table(schema)
     private var node = createInternalNode()
 
-    private fun createInternalNode(): InternalNode {
-        val leftLeafNode = createLeafNode(0, 1)
-        val rightLeafNode = createLeafNode(1, 2)
-        val node = InternalNode(table, Page.new(2, NodeType.InternalNode))
-        node.initialize(leftLeafNode, rightLeafNode)
+    private fun createInternalNode(leftFirst: Boolean = true): InternalNode {
+        val leftLeafNode = createLeafNode(2, 2)
+        val rightLeafNode = createLeafNode(4, 4)
+        val node = InternalNode(table, Page.new(99, NodeType.InternalNode))
+        if (leftFirst) {
+            node.addChildNode(leftLeafNode)
+            node.addChildNode(rightLeafNode)
+        } else {
+            node.addChildNode(rightLeafNode)
+            node.addChildNode(leftLeafNode)
+        }
         return node
     }
 
@@ -35,15 +41,29 @@ class TestInternalNode {
         return record
     }
 
+    private fun getKeys(): List<Int> {
+        return node.records.map{table.createKey(it).get("key") as Int}
+    }
+
     @BeforeEach
     fun init() {
         node = createInternalNode()
-        assertThat(node.id).isEqualTo(2)
+        assertThat(node.id).isEqualTo(99)
         assertThat(node.type).isEqualTo(NodeType.InternalNode)
         assertThat(node.previousId).isEqualTo(null)
         assertThat(node.nextId).isEqualTo(null)
-        assertThat(node.records.size).isEqualTo(1)
-        assertThat(table.createKey(node.records.first()).get("key")).isEqualTo(1)
+        assertThat(getKeys()).isEqualTo(listOf(2, 4))
+        assertThat(node.size).isEqualTo(node.dump().limit())
+    }
+
+    @Test
+    fun `initialize right first`() {
+        node = createInternalNode(false)
+        assertThat(node.id).isEqualTo(99)
+        assertThat(node.type).isEqualTo(NodeType.InternalNode)
+        assertThat(node.previousId).isEqualTo(null)
+        assertThat(node.nextId).isEqualTo(null)
+        assertThat(getKeys()).isEqualTo(listOf(2, 4))
         assertThat(node.size).isEqualTo(node.dump().limit())
     }
 
@@ -56,9 +76,31 @@ class TestInternalNode {
 
     @Test
     fun `find child id`() {
-        assertThat(node.findChildPageId(createRecord(0))).isEqualTo(0)
-        assertThat(node.findChildPageId(createRecord(1))).isEqualTo(0)
-        assertThat(node.findChildPageId(createRecord(2))).isEqualTo(1)
-        assertThat(node.findChildPageId(createRecord(3))).isEqualTo(1)
+        assertThat(node.findChildPageId(createRecord(0))).isEqualTo(2)
+        assertThat(node.findChildPageId(createRecord(1))).isEqualTo(2)
+        assertThat(node.findChildPageId(createRecord(2))).isEqualTo(2)
+        assertThat(node.findChildPageId(createRecord(3))).isEqualTo(2)
+        assertThat(node.findChildPageId(createRecord(4))).isEqualTo(4)
+        assertThat(node.findChildPageId(createRecord(5))).isEqualTo(4)
+        assertThat(node.findChildPageId(createRecord(6))).isEqualTo(4)
+    }
+
+    @Test
+    fun `add children`() {
+        val leafNode1 = createLeafNode(1, 1)
+        val leafNode3 = createLeafNode(3, 3)
+        val leafNode5 = createLeafNode(5, 5)
+        node.addChildNode(leafNode1)
+        node.addChildNode(leafNode3)
+        node.addChildNode(leafNode5)
+
+        assertThat(getKeys()).isEqualTo(listOf(1,2,3,4,5))
+        assertThat(node.findChildPageId(createRecord(0))).isEqualTo(1)
+        assertThat(node.findChildPageId(createRecord(1))).isEqualTo(1)
+        assertThat(node.findChildPageId(createRecord(2))).isEqualTo(2)
+        assertThat(node.findChildPageId(createRecord(3))).isEqualTo(3)
+        assertThat(node.findChildPageId(createRecord(4))).isEqualTo(4)
+        assertThat(node.findChildPageId(createRecord(5))).isEqualTo(5)
+        assertThat(node.findChildPageId(createRecord(6))).isEqualTo(5)
     }
 }

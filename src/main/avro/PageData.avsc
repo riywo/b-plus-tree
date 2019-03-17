@@ -4,7 +4,6 @@
   "fields": [
     {"name": "id", "type": "PageId"},
     {"name": "nodeType", "type": "NodeType"},
-    {"name": "sentinelId", "type": "PageId"},
     {"name": "previousId", "type": "PageId"},
     {"name": "nextId", "type": "PageId"},
     {"name": "records", "type": {"type": "array", "items": "bytes"} }

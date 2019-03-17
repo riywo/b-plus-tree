@@ -26,7 +26,6 @@ class Page private constructor(
 
     val id: Int by data
     val nodeType: NodeType by data
-    var sentinelId: Int? by data
     var previousId: Int? by data
     var nextId: Int? by data
     val records: List<ByteBuffer> get() = data.getRecords()
@@ -35,13 +34,11 @@ class Page private constructor(
     fun dump(): ByteBuffer = data.toByteBuffer()
 
     fun insert(index: Int, byteBuffer: ByteBuffer) {
+        if (index == 0 && previousId != null) throw PageInsertingMinimumException("")
         val newByteSize = calcPageSize(byteBuffer.toAvroBytesSize(), 1)
-        if (newByteSize > MAX_PAGE_SIZE) {
-            throw PageFullException("Can't insert record")
-        } else {
-            data.getRecords().add(index, byteBuffer)
-            byteSize = newByteSize
-        }
+        if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("Can't insert record")
+        data.getRecords().add(index, byteBuffer)
+        byteSize = newByteSize
     }
 
     fun update(index: Int, newByteBuffer: ByteBuffer) {

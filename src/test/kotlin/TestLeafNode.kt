@@ -14,10 +14,12 @@ class TestLeafNode {
     private val table = Table(schema)
     private var node = LeafNode(table, Page.new(1, NodeType.LeafNode))
     private val record = table.Record()
+    private val key = table.Key()
 
     init {
         record.put("key", 1)
         record.put("value", "a")
+        key.put("key", 1)
     }
 
     @BeforeEach
@@ -41,7 +43,7 @@ class TestLeafNode {
 
     @Test
     fun `get record`() {
-        val found = node.get(record)
+        val found = node.get(key)
         assertThat(found).isEqualTo(record)
         assertThat(node.records.size).isEqualTo(1)
     }
@@ -51,11 +53,13 @@ class TestLeafNode {
         val recordInserted = table.Record()
         recordInserted.put("key", 2)
         recordInserted.put("value", "b")
+        val keyInserted = table.Key()
+        keyInserted.put("key", 2)
         node.put(recordInserted)
 
         assertThat(node.records.size).isEqualTo(2)
-        assertThat(node.get(record)).isEqualTo(record)
-        assertThat(node.get(recordInserted)).isEqualTo(recordInserted)
+        assertThat(node.get(key)).isEqualTo(record)
+        assertThat(node.get(keyInserted)).isEqualTo(recordInserted)
         assertThat(node.size).isEqualTo(node.dump().limit())
     }
 
@@ -67,17 +71,16 @@ class TestLeafNode {
         node.put(recordUpdated)
 
         assertThat(node.records.size).isEqualTo(1)
-        assertThat(node.get(record)).isEqualTo(recordUpdated)
-        assertThat(node.get(recordUpdated)).isEqualTo(recordUpdated)
+        assertThat(node.get(key)).isEqualTo(recordUpdated)
         assertThat(node.size).isEqualTo(node.dump().limit())
     }
 
     @Test
     fun `delete record`() {
-        node.delete(record)
+        node.delete(key)
 
         assertThat(node.records.size).isEqualTo(0)
-        assertThat(node.get(record)).isEqualTo(null)
+        assertThat(node.get(key)).isEqualTo(null)
         assertThat(node.size).isEqualTo(node.dump().limit())
     }
 
@@ -90,7 +93,7 @@ class TestLeafNode {
             node.put(newRecord)
         }
         assertThat(node.records.size).isEqualTo(1)
-        assertThat(node.get(record)).isEqualTo(record)
+        assertThat(node.get(key)).isEqualTo(record)
         assertThat(node.size).isEqualTo(node.dump().limit())
     }
 

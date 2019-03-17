@@ -1,7 +1,7 @@
 package com.riywo.ninja.bptree
 
-class Tree(private val table: Table, private val pageManager: PageManager) {
-    private val rootNode: RootNode = RootNode(table, pageManager.create(NodeType.RootNode))
+class Tree(private val table: Table, private val pageManager: PageManager, rootPage: Page) {
+    private val rootNode: RootNode = RootNode(table, rootPage)
 
     fun get(key: Table.Key): Table.Record? {
         return findLeafNode(key, rootNode)?.get(key) as Table.Record

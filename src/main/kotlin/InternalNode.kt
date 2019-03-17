@@ -3,7 +3,7 @@ package com.riywo.ninja.bptree
 import java.lang.Exception
 import java.nio.ByteBuffer
 
-open class InternalNode(table: Table, page: Page) : LeafNode(table.key, table.internal, page) {
+open class InternalNode(table: Table, page: Page) : LeafNode(table, page) {
     fun findChildPageId(key: AvroGenericRecord): Int? {
         val result = find(key)
         return when (result) {
@@ -19,7 +19,8 @@ open class InternalNode(table: Table, page: Page) : LeafNode(table.key, table.in
     }
 
     fun addChildNode(node: Node) {
-        val record = createInternalRecord(node.minRecord, node.id)
+        val record = table.createInternal(node.minRecord)
+        record.childPageId = node.id
         val result = find(record)
         when (result) {
             is FindResult.FirstGraterThanMatch -> page.insert(result.index, record.toByteBuffer())
@@ -29,12 +30,6 @@ open class InternalNode(table: Table, page: Page) : LeafNode(table.key, table.in
     }
 
     private fun getChildPageId(byteBuffer: ByteBuffer): Int {
-        return createRecord(byteBuffer).get(INTERNAL_ID_FIELD_NAME) as Int
-    }
-
-    private fun createInternalRecord(byteBuffer: ByteBuffer, childId: Int): AvroGenericRecord {
-        val internal = createRecord(byteBuffer)
-        internal.put(INTERNAL_ID_FIELD_NAME, childId)
-        return internal
+        return table.createInternal(byteBuffer).childPageId
     }
 }

@@ -1,19 +1,15 @@
 package com.riywo.ninja.bptree
 
-open class LeafNode(keyIO: AvroGenericRecord.IO, recordIO: AvroGenericRecord.IO, page: Page)
-    : Node(keyIO, recordIO, page) {
-
-    constructor(table: Table, page: Page) : this(table.key, table.record, page)
-
-    fun get(key: AvroGenericRecord): AvroGenericRecord? {
+open class LeafNode(table: Table, page: Page) : Node(table, page) {
+    fun get(key: Table.Key): Table.Record? {
         val result = find(key)
         return when (result) {
-            is FindResult.ExactMatch -> createRecord(result.byteBuffer)
+            is FindResult.ExactMatch -> table.createRecord(result.byteBuffer)
             else -> null
         }
     }
 
-    fun put(record: AvroGenericRecord) {
+    fun put(record: Table.Record) {
         val byteBuffer = record.toByteBuffer()
         val result = find(record)
         when(result) {
@@ -23,7 +19,7 @@ open class LeafNode(keyIO: AvroGenericRecord.IO, recordIO: AvroGenericRecord.IO,
         }
     }
 
-    fun delete(key: AvroGenericRecord) {
+    fun delete(key: Table.Key) {
         val result = find(key)
         if (result is FindResult.ExactMatch) page.delete(result.index)
     }

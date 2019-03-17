@@ -34,6 +34,14 @@ class Table(schema: Schema) {
         internal = AvroGenericRecord.IO(internalSchema)
     }
 
+    inner class Record : AvroGenericRecord(record)
+    inner class Key : AvroGenericRecord(key)
+    inner class Internal : AvroGenericRecord(internal) {
+        var childPageId: Int
+            get() = get(INTERNAL_ID_FIELD_NAME) as Int
+            set(value) = put(INTERNAL_ID_FIELD_NAME, value)
+    }
+
     fun createRecord(byteBuffer: ByteBuffer): Record {
         val record = Record()
         record.load(byteBuffer)
@@ -46,6 +54,9 @@ class Table(schema: Schema) {
         return record
     }
 
-    inner class Record : AvroGenericRecord(record)
-    inner class Key : AvroGenericRecord(key)
+    fun createInternal(byteBuffer: ByteBuffer): Internal {
+        val record = Internal()
+        record.load(byteBuffer)
+        return record
+    }
 }

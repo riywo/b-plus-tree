@@ -3,8 +3,7 @@ package com.riywo.ninja.bptree
 import java.nio.ByteBuffer
 
 abstract class Node(
-    private val keyIO: AvroGenericRecord.IO,
-    private val recordIO: AvroGenericRecord.IO,
+    protected val table: Table,
     protected val page: Page
 ) {
     val id get() = page.id
@@ -24,20 +23,14 @@ abstract class Node(
 
     protected fun find(key: AvroGenericRecord): FindResult? {
         if (page.records.isEmpty()) return null
-        val keyBytes = keyIO.encode(key).toByteArray()
+        val keyBytes = table.key.encode(key).toByteArray()
         page.records.forEachIndexed { index, byteBuffer ->
             val bytes = byteBuffer.toByteArray()
-            when(keyIO.compare(bytes, keyBytes)) {
+            when(table.key.compare(bytes, keyBytes)) {
                 0 -> return FindResult.ExactMatch(index, byteBuffer)
                 1 -> return FindResult.FirstGraterThanMatch(index)
             }
         }
         return FindResult.FirstGraterThanMatch(page.records.size)
-    }
-
-    protected fun createRecord(byteBuffer: ByteBuffer): AvroGenericRecord {
-        val record = AvroGenericRecord(recordIO)
-        record.load(byteBuffer)
-        return record
     }
 }

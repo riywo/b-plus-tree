@@ -12,8 +12,8 @@ class LeafNode(table: Table, page: Page) : Node(table.key, table.record, page) {
     fun put(record: AvroGenericRecord) {
         val byteBuffer = record.toByteBuffer()
         val result = find(record)
-        when(result) { // TODO merge new and old record
-            is FindResult.ExactMatch -> page.update(result.index, byteBuffer)
+        when(result) {
+            is FindResult.ExactMatch -> page.update(result.index, byteBuffer) // TODO merge new and old
             is FindResult.FirstGraterThanMatch -> page.insert(result.index, byteBuffer)
             null -> page.insert(0, byteBuffer)
         }

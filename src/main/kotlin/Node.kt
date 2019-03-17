@@ -26,28 +26,13 @@ abstract class Node(
         if (page.records.isEmpty()) return null
         val keyBytes = keyIO.encode(key).toByteArray()
         page.records.forEachIndexed { index, byteBuffer ->
-            when(compareKeys(byteBuffer, keyBytes)) {
+            val bytes = byteBuffer.toByteArray()
+            when(keyIO.compare(bytes, keyBytes)) {
                 0 -> return FindResult.ExactMatch(index, byteBuffer)
                 1 -> return FindResult.FirstGraterThanMatch(index)
             }
         }
         return FindResult.FirstGraterThanMatch(page.records.size)
-    }
-
-    protected fun compareKeys(aByteBuffer: ByteBuffer, bByteBuffer: ByteBuffer): Int {
-        val aBytes = aByteBuffer.toByteArray()
-        val bBytes = bByteBuffer.toByteArray()
-        return keyIO.compare(aBytes, bBytes)
-    }
-
-    protected fun compareKeys(aBytes: ByteArray, bByteBuffer: ByteBuffer): Int {
-        val bBytes = bByteBuffer.toByteArray()
-        return keyIO.compare(aBytes, bBytes)
-    }
-
-    protected fun compareKeys(aByteBuffer: ByteBuffer, bBytes: ByteArray): Int {
-        val aBytes = aByteBuffer.toByteArray()
-        return keyIO.compare(aBytes, bBytes)
     }
 
     protected fun createRecord(byteBuffer: ByteBuffer): AvroGenericRecord {

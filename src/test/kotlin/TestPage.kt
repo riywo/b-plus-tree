@@ -84,6 +84,14 @@ class TestPage {
     }
 
     @Test
+    fun `can't insert 0 if previousId exists`() {
+        page.previousId = 2
+        assertThrows<PageInsertingMinimumException> { page.insert(0, byteBuffer) }
+        assertThat(page.records).isEqualTo(listOf(byteBuffer))
+        assertThat(page.size).isEqualTo(page.dump().limit())
+    }
+
+    @Test
     fun `can't update wrong index`() {
         for (i in listOf(-1, 1, 100)) {
             assertThrows<IndexOutOfBoundsException> { page.update(i, byteBuffer) }

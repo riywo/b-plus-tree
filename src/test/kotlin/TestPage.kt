@@ -7,15 +7,15 @@ import java.lang.IndexOutOfBoundsException
 import java.nio.ByteBuffer
 
 class TestPage {
-    private var page = Page.new(1, NodeType.LeafNode)
+    private var page = Page.new(1, NodeType.RootNode)
     private val byteBuffer = ByteBuffer.allocate(10)
 
     @BeforeEach
     fun init() {
-        page = Page.new(1, NodeType.LeafNode)
+        page = Page.new(1, NodeType.RootNode)
         page.insert(0, byteBuffer)
         assertThat(page.id).isEqualTo(1)
-        assertThat(page.nodeType).isEqualTo(NodeType.LeafNode)
+        assertThat(page.nodeType).isEqualTo(NodeType.RootNode)
         assertThat(page.previousId).isEqualTo(null)
         assertThat(page.nextId).isEqualTo(null)
         assertThat(page.records.size).isEqualTo(1)
@@ -127,5 +127,16 @@ class TestPage {
         val pageLoaded2 = Page.load(page.dump())
         assertThat(pageLoaded2.previousId).isEqualTo(null)
         assertThat(pageLoaded2.dump()).isEqualTo(page.dump())
+    }
+
+    @Test
+    fun `manipulate nodeType`() {
+        page.nodeType = NodeType.LeafNode
+        assertThat(page.nodeType).isEqualTo(NodeType.LeafNode)
+        assertThat(page.size).isEqualTo(page.dump().limit())
+
+        val pageLoaded = Page.load(page.dump())
+        assertThat(pageLoaded.nodeType).isEqualTo(NodeType.LeafNode)
+        assertThat(pageLoaded.dump()).isEqualTo(page.dump())
     }
 }

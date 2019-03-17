@@ -25,7 +25,7 @@ class Page private constructor(
     }
 
     val id: Int by data
-    val nodeType: NodeType by data
+    var nodeType: NodeType by data
     var previousId: Int? by data
     var nextId: Int? by data
     val records: List<ByteBuffer> get() = data.getRecords()

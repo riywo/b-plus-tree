@@ -3,7 +3,7 @@ package com.riywo.ninja.bptree
 import java.lang.Exception
 import java.nio.ByteBuffer
 
-class InternalNode(table: Table, page: Page) : Node(table.key, table.internal, page) {
+open class InternalNode(table: Table, page: Page) : LeafNode(table.key, table.internal, page) {
     fun findChildPageId(key: AvroGenericRecord): Int? {
         val result = find(key)
         return when (result) {

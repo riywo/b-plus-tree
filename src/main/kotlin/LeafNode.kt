@@ -1,6 +1,10 @@
 package com.riywo.ninja.bptree
 
-class LeafNode(table: Table, page: Page) : Node(table.key, table.record, page) {
+open class LeafNode(keyIO: AvroGenericRecord.IO, recordIO: AvroGenericRecord.IO, page: Page)
+    : Node(keyIO, recordIO, page) {
+
+    constructor(table: Table, page: Page) : this(table.key, table.record, page)
+
     fun get(key: AvroGenericRecord): AvroGenericRecord? {
         val result = find(key)
         return when (result) {

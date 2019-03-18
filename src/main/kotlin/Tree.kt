@@ -6,71 +6,71 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
     private val rootNode: RootNode = RootNode(table, rootPage)
 
     fun get(key: Table.Key): Table.Record? {
-        val searcher = Searcher()
-        val leafNode = searcher.findLeafNode(key, rootNode)
-        return leafNode.get(key)
+        val result = findLeafNode(key)
+        return result.leafNode.get(key)
     }
 
     fun put(record: Table.Record) {
-        val searcher = Searcher()
-        val leafNode = searcher.findLeafNode(record, rootNode)
+        val result = findLeafNode(record)
         try {
-            leafNode.put(record)
+            result.leafNode.put(record)
         } catch (e: PageFullException) {
-            splitNode(leafNode, searcher.internalNodes.reversed().iterator())
+            splitNode(result.leafNode, result.pathFromRoot.reversed().iterator())
         }
     }
 
-    private fun splitNode(node: Node, it: Iterator<InternalNode>) {
-        if (it.hasNext()) {
+    private data class FindResult(val leafNode: LeafNode, val pathFromRoot: List<InternalNode>)
+
+    private fun findLeafNode(
+        key: AvroGenericRecord,
+        parentNode: InternalNode = rootNode, pathFromRoot: List<InternalNode> = listOf()): FindResult {
+        if (parentNode.isLeafNode()) return FindResult(parentNode, pathFromRoot) // No root yet
+        val newPathFromRoot = pathFromRoot + parentNode
+        val childPageId = parentNode.findChildPageId(key)
+        val childPage = pageManager.get(childPageId) ?: throw Exception() // TODO
+        return when (childPage.nodeType) {
+            NodeType.LeafNode -> FindResult(LeafNode(table, childPage), newPathFromRoot)
+            NodeType.InternalNode -> findLeafNode(key, InternalNode(table, childPage), newPathFromRoot)
+            else -> throw Exception() // TODO
+        }
+    }
+
+    private fun splitNode(node: Node, pathToRoot: Iterator<InternalNode>) {
+        if (pathToRoot.hasNext()) {
+            val parent = pathToRoot.next()
             val newNode = when (node.type) {
                 NodeType.LeafNode -> LeafNode(table, node.split(pageManager))
                 NodeType.InternalNode -> InternalNode(table, node.split(pageManager))
                 else -> throw Exception() // TODO
             }
-            val parent = it.next()
             try {
                 parent.addChildNode(newNode)
             } catch (e: PageFullException) {
-                splitNode(parent, it)
+                splitNode(parent, pathToRoot)
             }
         } else {
-            // root node split
-            val (leftPage, rightPage) = rootNode.splitRoot(pageManager)
-            val (leftNode, rightNode) = when (rootNode.type) {
-                NodeType.LeafNode -> Pair(LeafNode(table, leftPage), LeafNode(table, rightPage))
-                NodeType.RootNode -> Pair(InternalNode(table, leftPage), InternalNode(table, rightPage))
-                else -> throw Exception() // TODO
-            }
-            rootNode.addChildNode(leftNode)
-            rootNode.addChildNode(rightNode)
-            rootNode.type = NodeType.RootNode
+            splitRootNode()
         }
     }
 
+    private fun splitRootNode() {
+        val (leftPage, rightPage) = rootNode.splitRoot(pageManager)
+        val (leftNode, rightNode) = when (rootNode.type) {
+            NodeType.LeafNode -> Pair(LeafNode(table, leftPage), LeafNode(table, rightPage))
+            NodeType.RootNode -> Pair(InternalNode(table, leftPage), InternalNode(table, rightPage))
+            else -> throw Exception() // TODO
+        }
+        rootNode.addChildNode(leftNode)
+        rootNode.addChildNode(rightNode)
+        rootNode.type = NodeType.RootNode
+    }
+
     fun delete(key: Table.Key) {
-        val searcher = Searcher()
-        val leafNode = searcher.findLeafNode(key, rootNode)
-        leafNode.delete(key) // TODO merge check
+        val result = findLeafNode(key)
+        result.leafNode.delete(key) // TODO merge
     }
 
     fun debug() {
         rootNode.printNode(pageManager)
-    }
-
-    private inner class Searcher {
-        val internalNodes: MutableList<InternalNode> = mutableListOf()
-
-        fun findLeafNode(key: AvroGenericRecord, internalNode: InternalNode): LeafNode {
-            if (internalNode.isLeafNode()) return internalNode // No root yet
-            internalNodes.add(internalNode)
-            val childPageId = internalNode.findChildPageId(key)
-            val childPage = pageManager.get(childPageId) ?: throw Exception() // TODO
-            return when (childPage.nodeType) {
-                NodeType.LeafNode -> LeafNode(table, childPage)
-                NodeType.InternalNode -> findLeafNode(key, InternalNode(table, childPage))
-                else -> throw Exception() // TODO
-            }
-        }
     }
 }

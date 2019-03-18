@@ -85,15 +85,31 @@ class TestLeafNode {
     }
 
     @Test
-    fun `can't put record`() {
+    fun `insert record page full`() {
         val newRecord = table.Record()
         newRecord.put("key", 2)
         newRecord.put("value", "a".repeat(MAX_PAGE_SIZE))
         assertThrows<PageFullException> {
             node.put(newRecord)
         }
-        assertThat(node.records.size).isEqualTo(1)
+        val newKey = table.Key()
+        newKey.put("key", 2)
+        assertThat(node.records.size).isEqualTo(2)
         assertThat(node.get(key)).isEqualTo(record)
+        assertThat(node.get(newKey)).isEqualTo(newRecord)
+        assertThat(node.size).isEqualTo(node.dump().limit())
+    }
+
+    @Test
+    fun `update record page full`() {
+        val newRecord = table.Record()
+        newRecord.put("key", 1)
+        newRecord.put("value", "a".repeat(MAX_PAGE_SIZE))
+        assertThrows<PageFullException> {
+            node.put(newRecord)
+        }
+        assertThat(node.records.size).isEqualTo(1)
+        assertThat(node.get(key)).isEqualTo(newRecord)
         assertThat(node.size).isEqualTo(node.dump().limit())
     }
 

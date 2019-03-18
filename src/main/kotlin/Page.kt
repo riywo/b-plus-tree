@@ -36,20 +36,17 @@ class Page private constructor(
     fun insert(index: Int, byteBuffer: ByteBuffer) {
         if (index == 0 && previousId != null) throw PageInsertingMinimumException("")
         val newByteSize = calcPageSize(byteBuffer.toAvroBytesSize(), 1)
-        if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("Can't insert record")
         data.getRecords().add(index, byteBuffer)
         byteSize = newByteSize
+        if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("")
     }
 
     fun update(index: Int, newByteBuffer: ByteBuffer) {
         val oldByteBuffer = data.getRecords()[index]
         val newByteSize = calcPageSize(newByteBuffer.toAvroBytesSize() - oldByteBuffer.toAvroBytesSize())
-        if (newByteSize > MAX_PAGE_SIZE) {
-            throw PageFullException("Can't update record")
-        } else {
-            data.getRecords()[index] = newByteBuffer
-            byteSize = newByteSize
-        }
+        data.getRecords()[index] = newByteBuffer
+        byteSize = newByteSize
+        if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("")
     }
 
     fun delete(index: Int): ByteBuffer {

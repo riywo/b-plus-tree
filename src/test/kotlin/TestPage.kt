@@ -55,22 +55,22 @@ class TestPage {
     }
 
     @Test
-    fun `can't insert full page`() {
+    fun `insert full page`() {
         val newByteBuffer = ByteBuffer.allocate(MAX_PAGE_SIZE)
         assertThrows<PageFullException> {
             page.insert(1, newByteBuffer)
         }
-        assertThat(page.records).isEqualTo(listOf(byteBuffer))
+        assertThat(page.records).isEqualTo(listOf(byteBuffer, newByteBuffer))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
     @Test
-    fun `can't update full page`() {
+    fun `update full page`() {
         val newByteBuffer = ByteBuffer.allocate(MAX_PAGE_SIZE)
         assertThrows<PageFullException> {
             page.update(0, newByteBuffer)
         }
-        assertThat(page.records).isEqualTo(listOf(byteBuffer))
+        assertThat(page.records).isEqualTo(listOf(newByteBuffer))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 

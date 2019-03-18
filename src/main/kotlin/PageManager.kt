@@ -25,8 +25,10 @@ class PageManager {
         fun findSplitPoint(it: Iterator<IndexedValue<ByteBuffer>>, accumulatedSize: Int = 0): Int {
             val next = it.next()
             val newSize = accumulatedSize + next.value.limit()
-            return if (newSize > MAX_PAGE_SIZE/2) next.index
-            else findSplitPoint(it, newSize)
+            return when {
+                newSize > MAX_PAGE_SIZE/2 -> next.index
+                else -> findSplitPoint(it, newSize)
+            }
         }
         val splitPoint = findSplitPoint(page.records.withIndex().iterator())
         val movingIndexes = splitPoint until page.records.size

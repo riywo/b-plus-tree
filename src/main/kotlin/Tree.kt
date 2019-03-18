@@ -17,14 +17,12 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
         try {
             leafNode.put(record)
         } catch (e: PageFullException) {
-            split(leafNode, searcher.internalNodes, record)
         }
     }
 
-    private fun split(leafNode: LeafNode, internalNodes: List<InternalNode>, newRecord: Table.Record) {
-        if (internalNodes.isEmpty()) {
-
-        }
+    private fun splitLeafNode(node: LeafNode, parent: InternalNode) {
+        val newNode = LeafNode(table, node.split(pageManager))
+        parent.addChildNode(newNode)
     }
 
     private fun splitRootNode() {

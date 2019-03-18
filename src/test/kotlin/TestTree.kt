@@ -49,10 +49,11 @@ class TestTree {
 
     @Test
     fun `insert many`() {
-        for (i in 2..100) {
-            val newRecord = createRecord(i, "a".repeat(1024))
+        for (i in 2..3000) {
+            val newRecord = createRecord(i, "a".repeat(MAX_PAGE_SIZE/50))
             tree.put(newRecord)
             assertThat(tree.get(createKey(i))).isEqualTo(newRecord)
         }
+        tree.debug()
     }
 }

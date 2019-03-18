@@ -54,6 +54,28 @@ abstract class Node(
         return pageManager.split(page)
     }
 
+    fun printNode(pageManager: PageManager, indent: Int = 0) {
+        when (type) {
+            NodeType.LeafNode -> {
+                println("${"    ".repeat(indent)}$type(id:$id size=$size keys=${records.map{table.createKey(it)}})")
+            }
+            NodeType.InternalNode, NodeType.RootNode -> {
+                println("${"    ".repeat(indent)}$type(id:$id size=$size records=${records.size})")
+                records.forEach {
+                    val internal = table.createInternal(it)
+                    val childPage = pageManager.get(internal.childPageId)!!
+                    val child = when(childPage.nodeType) {
+                        NodeType.InternalNode -> InternalNode(table, childPage)
+                        NodeType.LeafNode -> LeafNode(table, childPage)
+                        else -> throw Exception()
+                    }
+                    println("${"    ".repeat(indent+1)}${table.createKey(it)}")
+                    child.printNode(pageManager, indent+1)
+                }
+            }
+        }
+    }
+
     protected sealed class FindResult {
         data class ExactMatch(val index: Int, val byteBuffer: ByteBuffer) : FindResult()
         data class FirstGraterThanMatch(val index: Int) : FindResult()

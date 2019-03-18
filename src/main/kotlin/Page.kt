@@ -18,6 +18,8 @@ class Page private constructor(
             val data = PageData.fromByteBuffer(byteBuffer)
             return Page(data, byteBuffer.limit())
         }
+
+        val sizeOverhead = new(-1, NodeType.LeafNode, mutableListOf()).dump().limit()
     }
 
     init {

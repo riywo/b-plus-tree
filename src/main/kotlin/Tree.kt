@@ -17,7 +17,7 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
         try {
             leafNode.put(record)
         } catch (e: PageFullException) {
-            splitNode(leafNode, searcher.internalNodes.iterator())
+            splitNode(leafNode, searcher.internalNodes.reversed().iterator())
         }
     }
 
@@ -52,6 +52,10 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
         val searcher = Searcher()
         val leafNode = searcher.findLeafNode(key, rootNode)
         leafNode.delete(key) // TODO merge check
+    }
+
+    fun debug() {
+        rootNode.printNode(pageManager)
     }
 
     private inner class Searcher {

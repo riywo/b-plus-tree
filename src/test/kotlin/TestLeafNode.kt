@@ -115,7 +115,7 @@ class TestLeafNode {
 
     @Test
     fun `insert ordered`() {
-        val num = 100
+        val num = 5
         for (i in 2..num) {
             val newRecord = table.Record()
             newRecord.put("key", i)
@@ -128,7 +128,7 @@ class TestLeafNode {
 
     @Test
     fun `insert reversed`() {
-        val num = 100
+        val num = 5
         for (i in num downTo 2) {
             val newRecord = table.Record()
             newRecord.put("key", i)

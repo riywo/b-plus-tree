@@ -26,10 +26,7 @@ class PageManager {
             return if (it.hasNext()) {
                 val next = it.next()
                 val newSize = accumulatedSize + next.value.limit()
-                when {
-                    newSize > MAX_PAGE_SIZE/2 -> next.index
-                    else -> findSplitPoint(it, newSize)
-                }
+                if (Page.sizeOverhead + newSize*2 >= MAX_PAGE_SIZE) next.index else findSplitPoint(it, newSize)
             } else {
                 null
             }

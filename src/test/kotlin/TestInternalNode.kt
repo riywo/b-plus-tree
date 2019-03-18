@@ -16,7 +16,7 @@ class TestInternalNode {
     private fun createInternalNode(leftFirst: Boolean = true): InternalNode {
         val leftLeafNode = createLeafNode(2, 2)
         val rightLeafNode = createLeafNode(4, 4)
-        val node = InternalNode(table, Page.new(99, NodeType.InternalNode))
+        val node = InternalNode(table, Page.new(99, NodeType.InternalNode, mutableListOf()))
         if (leftFirst) {
             node.addChildNode(leftLeafNode)
             node.addChildNode(rightLeafNode)
@@ -28,7 +28,7 @@ class TestInternalNode {
     }
 
     private fun createLeafNode(id: Int, key: Int): LeafNode {
-        val node = LeafNode(table, Page.new(id, NodeType.LeafNode))
+        val node = LeafNode(table, Page.new(id, NodeType.LeafNode, mutableListOf()))
         val record = createRecord(key)
         node.put(record)
         return node

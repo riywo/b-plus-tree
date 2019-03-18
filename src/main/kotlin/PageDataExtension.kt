@@ -6,18 +6,18 @@ import java.nio.ByteBuffer
 import java.lang.Exception
 import kotlin.reflect.KProperty
 
-enum class PageDataProperties {
-    Id, PreviousId, NextId, NodeType
-}
-
-fun createPageData(id: Int, nodeType: NodeType): PageData {
+fun createPageData(id: Int, nodeType: NodeType, initialRecords: MutableList<ByteBuffer>): PageData {
     val builder = PageData.newBuilder()
     builder.id = createPageId(id)
     builder.nodeType = nodeType
     builder.previousId = createPageId()
     builder.nextId = createPageId()
-    builder.records = mutableListOf<ByteBuffer>()
+    builder.records = initialRecords
     return builder.build()
+}
+
+enum class PageDataProperties {
+    Id, PreviousId, NextId, NodeType
 }
 
 inline operator fun <reified T> PageData.getValue(thisRef: Any, property: KProperty<*>): T {
@@ -26,7 +26,6 @@ inline operator fun <reified T> PageData.getValue(thisRef: Any, property: KPrope
         PageDataProperties.NodeType -> getNodeType() as T
         PageDataProperties.PreviousId -> getPreviousId().getInt() as T
         PageDataProperties.NextId -> getNextId().getInt() as T
-        else -> throw Exception() // TODO
     }
 }
 

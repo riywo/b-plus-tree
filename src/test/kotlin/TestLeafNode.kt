@@ -12,7 +12,7 @@ class TestLeafNode {
         .name("value").orderIgnore().type().stringType().noDefault()
         .endRecord()
     private val table = Table(schema)
-    private var node = LeafNode(table, Page.new(1, NodeType.LeafNode))
+    private var node = LeafNode(table, Page.new(1, NodeType.LeafNode, mutableListOf()))
     private val record = table.Record()
     private val key = table.Key()
 
@@ -24,7 +24,7 @@ class TestLeafNode {
 
     @BeforeEach
     fun init() {
-        node = LeafNode(table, Page.new(1, NodeType.LeafNode))
+        node = LeafNode(table, Page.new(1, NodeType.LeafNode, mutableListOf()))
         node.put(record)
         assertThat(node.id).isEqualTo(1)
         assertThat(node.type).isEqualTo(NodeType.LeafNode)

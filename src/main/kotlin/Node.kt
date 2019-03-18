@@ -1,5 +1,6 @@
 package com.riywo.ninja.bptree
 
+import NodeType
 import java.nio.ByteBuffer
 
 abstract class Node(
@@ -7,14 +8,51 @@ abstract class Node(
     protected val page: Page
 ) {
     val id get() = page.id
-    val type get() = page.nodeType
-    val previousId get() = page.previousId
-    val nextId get() = page.nextId
+    var type
+        get() = page.nodeType
+        set(value) { page.nodeType = value }
+    var previousId
+        get() = page.previousId
+        set(value) { page.previousId = value }
+    var nextId
+        get() = page.nextId
+        set(value) { page.nextId = value }
     val size get() = page.size
     val records get() = page.records
     val minRecord get() = page.records.first()
 
     fun dump() = page.dump()
+
+    fun isLeafNode(): Boolean = type == NodeType.LeafNode
+    fun isInternalNode(): Boolean = type == NodeType.InternalNode
+    fun isRootNode(): Boolean = type == NodeType.RootNode
+
+    fun get(key: Table.Key): Table.Record? {
+        val result = find(key)
+        return when (result) {
+            is FindResult.ExactMatch -> table.createRecord(result.byteBuffer)
+            else -> null
+        }
+    }
+
+    fun put(record: Table.Record) {
+        val byteBuffer = record.toByteBuffer()
+        val result = find(record)
+        when(result) {
+            is FindResult.ExactMatch -> page.update(result.index, byteBuffer) // TODO merge new and old
+            is FindResult.FirstGraterThanMatch -> page.insert(result.index, byteBuffer)
+            null -> page.insert(0, byteBuffer)
+        }
+    }
+
+    fun delete(key: Table.Key) {
+        val result = find(key)
+        if (result is FindResult.ExactMatch) page.delete(result.index)
+    }
+
+    fun split(pageManager: PageManager): Page {
+        return pageManager.split(page)
+    }
 
     protected sealed class FindResult {
         data class ExactMatch(val index: Int, val byteBuffer: ByteBuffer) : FindResult()

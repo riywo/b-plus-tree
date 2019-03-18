@@ -9,8 +9,8 @@ class Page private constructor(
     private var byteSize: Int = 0
 ) {
     companion object {
-        fun new(id: Int, nodeType: NodeType): Page {
-            val data = createPageData(id, nodeType)
+        fun new(id: Int, nodeType: NodeType, initialRecords: MutableList<ByteBuffer>): Page {
+            val data = createPageData(id, nodeType, initialRecords)
             return Page(data)
         }
 
@@ -52,11 +52,12 @@ class Page private constructor(
         }
     }
 
-    fun delete(index: Int) {
+    fun delete(index: Int): ByteBuffer {
         val byteBuffer = data.getRecords()[index]
         val newByteSize = calcPageSize(-byteBuffer.toAvroBytesSize(), -1)
         data.getRecords().removeAt(index)
         byteSize = newByteSize
+        return byteBuffer
     }
 
     private fun calcPageSize(changingBytes: Int, changingLength: Int = 0): Int {

@@ -7,12 +7,12 @@ import java.lang.IndexOutOfBoundsException
 import java.nio.ByteBuffer
 
 class TestPage {
-    private var page = Page.new(1, NodeType.RootNode)
+    private var page = Page.new(1, NodeType.RootNode, mutableListOf())
     private val byteBuffer = ByteBuffer.allocate(10)
 
     @BeforeEach
     fun init() {
-        page = Page.new(1, NodeType.RootNode)
+        page = Page.new(1, NodeType.RootNode, mutableListOf())
         page.insert(0, byteBuffer)
         assertThat(page.id).isEqualTo(1)
         assertThat(page.nodeType).isEqualTo(NodeType.RootNode)

@@ -4,7 +4,7 @@ import java.lang.Exception
 import java.nio.ByteBuffer
 
 open class InternalNode(table: Table, page: Page) : LeafNode(table, page) {
-    fun findChildPageId(key: AvroGenericRecord): Int? {
+    fun findChildPageId(key: AvroGenericRecord): Int {
         val result = find(key)
         return when (result) {
             is FindResult.ExactMatch -> getChildPageId(result.byteBuffer)
@@ -14,7 +14,7 @@ open class InternalNode(table: Table, page: Page) : LeafNode(table, page) {
                 val index = if (result.index == 0) 0 else result.index-1
                 getChildPageId(page.records[index])
             }
-            null -> null
+            null -> throw Exception() // TODO
         }
     }
 

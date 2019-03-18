@@ -32,12 +32,16 @@ class PageManager {
         }
         val splitPoint = findSplitPoint(page.records.withIndex().iterator())
         val movingIndexes = splitPoint until page.records.size
-        val newRecords = movingIndexes.map { page.delete(it) }.toMutableList()
-        val newPage = create(page.nodeType, newRecords)
+        val newPage = move(page, page.nodeType, movingIndexes)
         val nextPage = get(page.nextId)
         connect(page, newPage)
         connect(newPage, nextPage)
         return newPage
+    }
+
+    fun move(page: Page, nodeType: NodeType, range: IntRange): Page {
+        val records = range.map { page.delete(it) }.toMutableList()
+        return create(nodeType, records)
     }
 
     private fun connect(previous: Page?, next: Page?) {

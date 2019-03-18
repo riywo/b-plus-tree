@@ -17,16 +17,32 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
         try {
             leafNode.put(record)
         } catch (e: PageFullException) {
+            val splitNode = LeafNode(table, leafNode.split(pageManager))
+            putChildNode(splitNode, searcher.internalNodes.iterator())
         }
     }
 
-    private fun splitLeafNode(node: LeafNode, parent: InternalNode) {
-        val newNode = LeafNode(table, node.split(pageManager))
-        parent.addChildNode(newNode)
-    }
-
-    private fun splitRootNode() {
-
+    private fun putChildNode(child: Node, it: Iterator<InternalNode>) {
+        if (it.hasNext()) {
+            val parent = it.next()
+            try {
+                parent.addChildNode(child)
+            } catch (e: PageFullException) {
+                val splitNode = InternalNode(table, parent.split(pageManager))
+                putChildNode(splitNode, it)
+            }
+        } else {
+            // root node split
+            val (leftPage, rightPage) = rootNode.splitRoot(pageManager)
+            val (leftNode, rightNode) = when (rootNode.type) {
+                NodeType.LeafNode -> Pair(LeafNode(table, leftPage), LeafNode(table, rightPage))
+                NodeType.RootNode -> Pair(InternalNode(table, leftPage), InternalNode(table, rightPage))
+                else -> throw Exception() // TODO
+            }
+            rootNode.addChildNode(leftNode)
+            rootNode.addChildNode(rightNode)
+            rootNode.type = NodeType.RootNode
+        }
     }
 
     fun delete(key: Table.Key) {

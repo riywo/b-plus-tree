@@ -22,15 +22,19 @@ class PageManager {
     }
 
     fun split(page: Page): Page {
-        fun findSplitPoint(it: Iterator<IndexedValue<ByteBuffer>>, accumulatedSize: Int = 0): Int {
-            val next = it.next()
-            val newSize = accumulatedSize + next.value.limit()
-            return when {
-                newSize > MAX_PAGE_SIZE/2 -> next.index
-                else -> findSplitPoint(it, newSize)
+        fun findSplitPoint(it: Iterator<IndexedValue<ByteBuffer>>, accumulatedSize: Int = 0): Int? {
+            return if (it.hasNext()) {
+                val next = it.next()
+                val newSize = accumulatedSize + next.value.limit()
+                when {
+                    newSize > MAX_PAGE_SIZE/2 -> next.index
+                    else -> findSplitPoint(it, newSize)
+                }
+            } else {
+                null
             }
         }
-        val splitPoint = findSplitPoint(page.records.withIndex().iterator())
+        val splitPoint = findSplitPoint(page.records.withIndex().iterator()) ?: page.records.size-1
         val movingIndexes = splitPoint until page.records.size
         val newPage = move(page, page.nodeType, movingIndexes)
         val nextPage = get(page.nextId)
@@ -40,7 +44,7 @@ class PageManager {
     }
 
     fun move(page: Page, nodeType: NodeType, range: IntRange): Page {
-        val records = range.map { page.delete(it) }.toMutableList()
+        val records = range.map { page.delete(range.first) }.toMutableList()
         return create(nodeType, records)
     }
 

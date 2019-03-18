@@ -14,10 +14,10 @@ class TestTree {
     private var pageManager = PageManager()
     private var tree = Tree(table, pageManager, pageManager.create(NodeType.LeafNode, mutableListOf()))
 
-    private fun createRecord(key: Int, value: Int = key): Table.Record {
+    private fun createRecord(key: Int, value: String = "$key"): Table.Record {
         val record = table.Record()
         record.put("key", key)
-        record.put("value", "$value")
+        record.put("value", value)
         return record
     }
 
@@ -42,8 +42,17 @@ class TestTree {
 
     @Test
     fun `update no-root`() {
-        val newRecord = createRecord(1, 2)
+        val newRecord = createRecord(1, "2")
         tree.put(newRecord)
         assertThat(tree.get(createKey(1))).isEqualTo(createRecord(1))
+    }
+
+    @Test
+    fun `insert many`() {
+        for (i in 2..100) {
+            val newRecord = createRecord(i, "a".repeat(1024))
+            tree.put(newRecord)
+            assertThat(tree.get(createKey(i))).isEqualTo(newRecord)
+        }
     }
 }

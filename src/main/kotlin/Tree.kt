@@ -17,19 +17,22 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
         try {
             leafNode.put(record)
         } catch (e: PageFullException) {
-            val splitNode = LeafNode(table, leafNode.split(pageManager))
-            putChildNode(splitNode, searcher.internalNodes.iterator())
+            splitNode(leafNode, searcher.internalNodes.iterator())
         }
     }
 
-    private fun putChildNode(child: Node, it: Iterator<InternalNode>) {
+    private fun splitNode(node: Node, it: Iterator<InternalNode>) {
         if (it.hasNext()) {
+            val newNode = when (node.type) {
+                NodeType.LeafNode -> LeafNode(table, node.split(pageManager))
+                NodeType.InternalNode -> InternalNode(table, node.split(pageManager))
+                else -> throw Exception() // TODO
+            }
             val parent = it.next()
             try {
-                parent.addChildNode(child)
+                parent.addChildNode(newNode)
             } catch (e: PageFullException) {
-                val splitNode = InternalNode(table, parent.split(pageManager))
-                putChildNode(splitNode, it)
+                splitNode(parent, it)
             }
         } else {
             // root node split

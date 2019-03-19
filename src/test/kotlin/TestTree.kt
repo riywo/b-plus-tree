@@ -60,7 +60,7 @@ class TestTree {
     }
 
     @Test
-    fun `insert reverse ordered`() {
+    fun `insert reversed ordered`() {
         val records = (2..3000).map { createRecord(it, "a".repeat(MAX_PAGE_SIZE/50)) }
         for (newRecord in records.reversed()) {
             tree.put(newRecord)
@@ -69,5 +69,18 @@ class TestTree {
         assertThat(scanned).isEqualTo(records)
         val scannedReversed = tree.scan(createKey(3000), createKey(2)).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
+    }
+
+    @Test
+    fun `insert shuffled ordered`() {
+        val records = (2..3000).map { createRecord(it, "a".repeat(MAX_PAGE_SIZE/50)) }
+        for (newRecord in records.shuffled()) {
+            tree.put(newRecord)
+        }
+        val scanned = tree.scan(createKey(2), createKey(3000)).toList()
+        assertThat(scanned).isEqualTo(records)
+        val scannedReversed = tree.scan(createKey(3000), createKey(2)).toList()
+        assertThat(scannedReversed).isEqualTo(records.reversed())
+        tree.debug()
     }
 }

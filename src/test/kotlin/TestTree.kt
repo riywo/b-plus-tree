@@ -48,8 +48,18 @@ class TestTree {
     }
 
     @Test
-    fun `insert many`() {
+    fun `insert ordered`() {
         for (i in 2..3000) {
+            val newRecord = createRecord(i, "a".repeat(MAX_PAGE_SIZE/50))
+            tree.put(newRecord)
+            assertThat(tree.get(createKey(i))).isEqualTo(newRecord)
+        }
+        tree.debug()
+    }
+
+    @Test
+    fun `insert reverse ordered`() {
+        for (i in 3000 downTo 2) {
             val newRecord = createRecord(i, "a".repeat(MAX_PAGE_SIZE/50))
             tree.put(newRecord)
             assertThat(tree.get(createKey(i))).isEqualTo(newRecord)

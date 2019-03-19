@@ -46,5 +46,13 @@ open class AvroGenericRecord(private val io: IO) : GenericData.Record(io.schema)
         fun compare(a: ByteArray, b: ByteArray): Int {
             return BinaryData.compare(a, 0 , b, 0, schema)
         }
+
+        fun compare(a: ByteBuffer, b: ByteBuffer): Int {
+            return compare(a.toByteArray(), b.toByteArray())
+        }
+
+        fun compare(a: AvroGenericRecord, b: AvroGenericRecord): Int {
+            return compare(a.toByteBuffer(), b.toByteBuffer())
+        }
     }
 }

@@ -19,6 +19,31 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
         }
     }
 
+    fun scan(startKey: Table.Key, endKey: Table.Key): Sequence<Table.Record> {
+        val isAscending = table.key.compare(startKey, endKey) == -1
+        val startByteBuffer = startKey.toByteBuffer()
+        val endByteBuffer = endKey.toByteBuffer()
+        val firstNode = findLeafNode(startKey).leafNode
+        return if (isAscending) {
+            generateSequence(firstNode) { createLeafNode(it.nextId) }
+                .flatMap { it.records.asSequence() }
+                .dropWhile { table.key.compare(it, startByteBuffer) == -1 } // it < startKey
+                .takeWhile { table.key.compare(it, endByteBuffer) != 1 }    // it <= endKey
+                .map { table.createRecord(it) }
+        } else {
+            generateSequence(firstNode) { createLeafNode(it.previousId) }
+                .flatMap { it.records.reversed().asSequence() }
+                .dropWhile { table.key.compare(it, startByteBuffer) == 1 } // it > startKey
+                .takeWhile { table.key.compare(it, endByteBuffer) != -1 }  // it >= endKey
+                .map { table.createRecord(it) }
+        }
+    }
+
+    private fun createLeafNode(id: Int?): LeafNode? {
+        val page = pageManager.get(id) ?: return null
+        return LeafNode(table, page)
+    }
+
     private data class FindResult(val leafNode: LeafNode, val pathFromRoot: List<InternalNode>)
 
     private fun findLeafNode(

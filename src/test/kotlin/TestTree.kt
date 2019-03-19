@@ -49,21 +49,25 @@ class TestTree {
 
     @Test
     fun `insert ordered`() {
-        for (i in 2..3000) {
-            val newRecord = createRecord(i, "a".repeat(MAX_PAGE_SIZE/50))
+        val records = (2..3000).map { createRecord(it, "a".repeat(MAX_PAGE_SIZE/50)) }
+        for (newRecord in records) {
             tree.put(newRecord)
-            assertThat(tree.get(createKey(i))).isEqualTo(newRecord)
         }
-        tree.debug()
+        val scanned = tree.scan(createKey(2), createKey(3000)).toList()
+        assertThat(scanned).isEqualTo(records)
+        val scannedReversed = tree.scan(createKey(3000), createKey(2)).toList()
+        assertThat(scannedReversed).isEqualTo(records.reversed())
     }
 
     @Test
     fun `insert reverse ordered`() {
-        for (i in 3000 downTo 2) {
-            val newRecord = createRecord(i, "a".repeat(MAX_PAGE_SIZE/50))
+        val records = (2..3000).map { createRecord(it, "a".repeat(MAX_PAGE_SIZE/50)) }
+        for (newRecord in records.reversed()) {
             tree.put(newRecord)
-            assertThat(tree.get(createKey(i))).isEqualTo(newRecord)
         }
-        tree.debug()
+        val scanned = tree.scan(createKey(2), createKey(3000)).toList()
+        assertThat(scanned).isEqualTo(records)
+        val scannedReversed = tree.scan(createKey(3000), createKey(2)).toList()
+        assertThat(scannedReversed).isEqualTo(records.reversed())
     }
 }

@@ -82,9 +82,9 @@ abstract class Node(
     }
 
     protected fun find(key: AvroGenericRecord): FindResult? {
-        if (page.records.isEmpty()) return null
+        if (records.isEmpty()) return null
         val keyBytes = table.key.encode(key).toByteArray()
-        page.records.forEachIndexed { index, byteBuffer ->
+        records.forEachIndexed { index, byteBuffer ->
             val bytes = byteBuffer.toByteArray()
             when(table.key.compare(bytes, keyBytes)) {
                 0 -> return FindResult.ExactMatch(index, byteBuffer)

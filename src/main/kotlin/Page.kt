@@ -5,6 +5,8 @@ import NodeType
 import KeyValue
 import java.nio.ByteBuffer
 
+private val logger = mu.KotlinLogging.logger {}
+
 class Page private constructor(
     private val data: PageData,
     private var byteSize: Int = 0
@@ -20,7 +22,7 @@ class Page private constructor(
             return Page(data, byteBuffer.limit())
         }
 
-        val sizeOverhead = new(-1, NodeType.LeafNode, mutableListOf()).dump().limit()
+        val sizeOverhead = Page(emptyPageData).dump().limit()
     }
 
     init {

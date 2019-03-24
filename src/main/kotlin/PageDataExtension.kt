@@ -16,6 +16,8 @@ fun createPageData(id: Int, nodeType: NodeType, initialRecords: MutableList<KeyV
     return builder.build()
 }
 
+val emptyPageData = createPageData(-1, NodeType.LeafNode, mutableListOf())
+
 enum class PageDataProperties {
     Id, PreviousId, NextId, NodeType
 }

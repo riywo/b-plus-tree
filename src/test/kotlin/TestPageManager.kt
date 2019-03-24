@@ -11,7 +11,7 @@ class TestPageManager {
     private val numRecords = 20
     private val keyValue = KeyValue(
         ByteBuffer.allocate(1),
-        ByteBuffer.allocate(MAX_PAGE_SIZE/numRecords)
+        ByteBuffer.allocate(MAX_PAGE_SIZE/numRecords - 4)
     )
     private var pageManager = PageManager()
     private var page = pageManager.create(NodeType.RootNode, MutableList(numRecords){keyValue})

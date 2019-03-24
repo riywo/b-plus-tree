@@ -62,27 +62,25 @@ abstract class Node(
     }
 
     fun printNode(pageManager: PageManager, indent: Int = 0) {
-/**
         when (type) {
             NodeType.LeafNode -> {
-                println("${"    ".repeat(indent)}$type(id:$id size=$size keys=${records.map{table.createKey(it)}})")
+                println("${"    ".repeat(indent)}$type(id:$id size=$size keys=${records.map{it.key.toHexString()}.toList()})")
             }
             NodeType.InternalNode, NodeType.RootNode -> {
-                println("${"    ".repeat(indent)}$type(id:$id size=$size records=${records.size})")
+                println("${"    ".repeat(indent)}$type(id:$id size=$size records=$recordsSize)")
                 records.forEach {
-                    val internal = table.createInternal(it)
-                    val childPage = pageManager.get(internal.childPageId)!!
+                    val childPageId = InternalNode.decodeChildPageId(it.value)
+                    val childPage = pageManager.get(childPageId)!!
                     val child = when(childPage.nodeType) {
-                        NodeType.InternalNode -> InternalNode(table, childPage)
-                        NodeType.LeafNode -> LeafNode(table, childPage)
+                        NodeType.InternalNode -> InternalNode(childPage, compare)
+                        NodeType.LeafNode -> LeafNode(childPage, compare)
                         else -> throw Exception()
                     }
-                    println("${"    ".repeat(indent+1)}${table.createKey(it)}")
+                    println("${"    ".repeat(indent+1)}key=${it.key.toHexString()}")
                     child.printNode(pageManager, indent+1)
                 }
             }
         }
-**/
     }
 
     protected sealed class FindResult {

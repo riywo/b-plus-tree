@@ -11,14 +11,10 @@ class PageManager {
         return pool[id]
     }
 
-    fun put(page: Page) {
-        pool[page.id] = page
-    }
-
     fun create(nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
         val maxId = pool.keys.max() ?: 0
         val page = Page.new(maxId + 1, nodeType, initialRecords)
-        put(page)
+        pool[page.id] = page
         return page
     }
 

@@ -38,13 +38,15 @@ abstract class Node(
         }
     }
 
-    fun put(key: ByteBuffer, value: ByteBuffer) {
-        val keyValue = KeyValue(key, value)
+    fun put(key: ByteBuffer, value: ByteBuffer, merge: MergeRule? = null) {
         val result = find(key)
         when(result) {
-            is FindResult.ExactMatch -> page.update(result.index, keyValue)
-            is FindResult.FirstGraterThanMatch -> page.insert(result.index, keyValue)
-            null -> page.insert(0, keyValue)
+            is FindResult.ExactMatch -> {
+                val newValue = merge?.invoke(value, result.value) ?: value
+                page.update(result.index, KeyValue(key, newValue))
+            }
+            is FindResult.FirstGraterThanMatch -> page.insert(result.index, KeyValue(key, value))
+            null -> page.insert(0, KeyValue(key, value))
         }
     }
 

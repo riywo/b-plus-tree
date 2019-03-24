@@ -5,7 +5,6 @@ import java.nio.ByteBuffer
 
 class Tree(private val pageManager: PageManager, private val compare: KeyCompare, rootPage: Page) {
     private val rootNode: RootNode = RootNode(rootPage, compare)
-
     private fun compare(a: ByteBuffer, b: ByteBuffer) = compare(a.toByteArray(), b.toByteArray())
 
     fun get(key: ByteBuffer): Record? {

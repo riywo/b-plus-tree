@@ -38,6 +38,12 @@ class TestLeafNode {
     }
 
     @Test
+    fun `get record not found`() {
+        val found = node.get(byteArrayOf(2).toByteBuffer())
+        assertThat(found).isEqualTo(null)
+    }
+
+    @Test
     fun `insert record`() {
         val newRecord = Record(byteArrayOf(2), byteArrayOf(2))
         node.put(newRecord)

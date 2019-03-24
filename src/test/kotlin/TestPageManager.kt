@@ -8,25 +8,26 @@ import java.nio.ByteBuffer
 import KeyValue
 
 class TestPageManager {
+    private val numRecords = 20
     private val keyValue = KeyValue(
         ByteBuffer.allocate(1),
-        ByteBuffer.allocate(MAX_PAGE_SIZE/100)
+        ByteBuffer.allocate(MAX_PAGE_SIZE/numRecords)
     )
     private var pageManager = PageManager()
-    private var page = pageManager.create(NodeType.RootNode, MutableList(100){keyValue})
+    private var page = pageManager.create(NodeType.RootNode, MutableList(numRecords){keyValue})
 
     @BeforeEach
     fun init() {
         pageManager = PageManager()
-        page = pageManager.create(NodeType.RootNode, MutableList(100){keyValue})
+        page = pageManager.create(NodeType.RootNode, MutableList(numRecords){keyValue})
         assertThat(pageManager.get(1)).isEqualTo(page)
-        assertThat(page.records.size).isEqualTo(100)
+        assertThat(page.records.size).isEqualTo(numRecords)
     }
 
     @Test
     fun `split at middle`() {
         val newPage = pageManager.split(page)
-        assertThat(page.records.size).isCloseTo(50, Offset.offset(1))
-        assertThat(newPage.records.size).isCloseTo(50, Offset.offset(1))
+        assertThat(page.records.size).isCloseTo(numRecords/2, Offset.offset(1))
+        assertThat(newPage.records.size).isCloseTo(numRecords/2, Offset.offset(1))
     }
 }

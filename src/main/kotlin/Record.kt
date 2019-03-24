@@ -5,10 +5,7 @@ import KeyValue
 
 data class Record(val key: ByteBuffer, val value: ByteBuffer) {
     constructor(keyValue: KeyValue) : this(keyValue.getKey(), keyValue.getValue())
-    constructor(keyBytes: ByteArray, valueBytes: ByteArray)
-            : this(keyBytes.toByteBuffer(), valueBytes.toByteBuffer())
-    constructor(key: ByteBuffer, valueBytes: ByteArray)
-            : this(key, valueBytes.toByteBuffer())
-    constructor(keyBytes: ByteArray, value: ByteBuffer)
-            : this(keyBytes.toByteBuffer(), value)
+    constructor(key: ByteArray, value: ByteArray) : this(key.toByteBuffer(), value.toByteBuffer())
+    constructor(key: ByteBuffer, value: ByteArray) : this(key, value.toByteBuffer())
+    constructor(key: ByteArray, value: ByteBuffer) : this(key.toByteBuffer(), value)
 }

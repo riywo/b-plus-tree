@@ -52,7 +52,9 @@ abstract class Node(
 
     fun delete(key: ByteBuffer) {
         val result = find(key)
-        if (result is FindResult.ExactMatch) page.delete(result.index)
+        if (result is FindResult.ExactMatch) {
+            page.delete(result.index)
+        }
     }
 
     fun get(record: Record) = get(record.key)

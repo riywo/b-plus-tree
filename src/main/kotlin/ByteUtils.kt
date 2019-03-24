@@ -13,10 +13,10 @@ fun ByteArray.toHexString() = joinToString(":") { String.format("%02x", it) }
 
 // ByteBuffer
 
-fun ByteBuffer.toByteArray(startPosition: Int = 0): ByteArray {
-    position(startPosition)
-    val bytes = ByteArray(remaining())
-    get(bytes)
+fun ByteBuffer.toByteArray(buffer: ByteArray? = null): ByteArray {
+    position(0)
+    val bytes = buffer ?: ByteArray(remaining())
+    get(bytes, 0, remaining())
     rewind()
     return bytes
 }

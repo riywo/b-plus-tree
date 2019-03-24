@@ -2,12 +2,12 @@ package com.riywo.ninja.bptree
 
 import NodeType
 import KeyValue
-import java.nio.ByteBuffer
 
 class PageManager {
     private val pool = hashMapOf<Int, Page>()
 
     fun get(id: Int?): Page? {
+        if (id == null) return null
         return pool[id]
     }
 

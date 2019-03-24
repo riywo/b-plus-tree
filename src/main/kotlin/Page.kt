@@ -2,6 +2,7 @@ package com.riywo.ninja.bptree
 
 import PageData
 import NodeType
+import KeyValue
 import java.nio.ByteBuffer
 
 class Page private constructor(
@@ -9,7 +10,7 @@ class Page private constructor(
     private var byteSize: Int = 0
 ) {
     companion object {
-        fun new(id: Int, nodeType: NodeType, initialRecords: MutableList<ByteBuffer>): Page {
+        fun new(id: Int, nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
             val data = createPageData(id, nodeType, initialRecords)
             return Page(data)
         }
@@ -30,33 +31,33 @@ class Page private constructor(
     var nodeType: NodeType by data
     var previousId: Int? by data
     var nextId: Int? by data
-    val records: List<ByteBuffer> get() = data.getRecords()
+    val records: List<KeyValue> get() = data.getRecords()
     val size: Int get() = byteSize
 
     fun dump(): ByteBuffer = data.toByteBuffer()
 
-    fun insert(index: Int, byteBuffer: ByteBuffer) {
+    fun insert(index: Int, keyValue: KeyValue) {
         if (index == 0 && previousId != null) throw PageInsertingMinimumException("")
-        val newByteSize = calcPageSize(byteBuffer.toAvroBytesSize(), 1)
-        data.getRecords().add(index, byteBuffer)
+        val newByteSize = calcPageSize(keyValue.toAvroBytesSize(), 1)
+        data.getRecords().add(index, keyValue)
         byteSize = newByteSize
         if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("")
     }
 
-    fun update(index: Int, newByteBuffer: ByteBuffer) {
-        val oldByteBuffer = data.getRecords()[index]
-        val newByteSize = calcPageSize(newByteBuffer.toAvroBytesSize() - oldByteBuffer.toAvroBytesSize())
-        data.getRecords()[index] = newByteBuffer
+    fun update(index: Int, newKeyValue: KeyValue) {
+        val oldKeyValue = data.getRecords()[index]
+        val newByteSize = calcPageSize(newKeyValue.toAvroBytesSize() - oldKeyValue.toAvroBytesSize())
+        data.getRecords()[index] = newKeyValue
         byteSize = newByteSize
         if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("")
     }
 
-    fun delete(index: Int): ByteBuffer {
-        val byteBuffer = data.getRecords()[index]
-        val newByteSize = calcPageSize(-byteBuffer.toAvroBytesSize(), -1)
+    fun delete(index: Int): KeyValue {
+        val keyValue = data.getRecords()[index]
+        val newByteSize = calcPageSize(-keyValue.toAvroBytesSize(), -1)
         data.getRecords().removeAt(index)
         byteSize = newByteSize
-        return byteBuffer
+        return keyValue
     }
 
     private fun calcPageSize(changingBytes: Int, changingLength: Int = 0): Int {

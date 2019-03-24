@@ -2,11 +2,11 @@ package com.riywo.ninja.bptree
 
 import PageData
 import NodeType
-import java.nio.ByteBuffer
+import KeyValue
 import java.lang.Exception
 import kotlin.reflect.KProperty
 
-fun createPageData(id: Int, nodeType: NodeType, initialRecords: MutableList<ByteBuffer>): PageData {
+fun createPageData(id: Int, nodeType: NodeType, initialRecords: MutableList<KeyValue>): PageData {
     val builder = PageData.newBuilder()
     builder.id = createPageId(id)
     builder.nodeType = nodeType

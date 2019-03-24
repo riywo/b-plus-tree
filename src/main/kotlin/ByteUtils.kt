@@ -1,7 +1,17 @@
 package com.riywo.ninja.bptree
 
 import org.apache.avro.io.BinaryData
+import org.apache.avro.io.BinaryDecoder
+import org.apache.avro.io.DecoderFactory
 import java.nio.ByteBuffer
+
+// ByteArray
+
+fun ByteArray.toByteBuffer(): ByteBuffer = ByteBuffer.wrap(this)
+
+fun ByteArray.toHexString() = joinToString(":") { String.format("%02x", it) }
+
+// ByteBuffer
 
 fun ByteBuffer.toByteArray(startPosition: Int = 0): ByteArray {
     position(startPosition)
@@ -11,15 +21,14 @@ fun ByteBuffer.toByteArray(startPosition: Int = 0): ByteArray {
     return bytes
 }
 
-fun ByteArray.toByteBuffer(): ByteBuffer = ByteBuffer.wrap(this)
-
-fun ByteArray.toHexString() = joinToString(":") { String.format("%02x", it) }
-fun ByteBuffer.toHexString() = toByteArray().toHexString()
-
 fun ByteBuffer.toAvroBytesSize(): Int {
     val size = limit()
     return size + size.toAvroBytesSize()
 }
+
+fun ByteBuffer.toHexString() = toByteArray().toHexString()
+
+// Int
 
 fun Int.toAvroBytesSize(): Int {
     val bytes = ByteArray(5)

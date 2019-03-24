@@ -1,52 +1,26 @@
 package com.riywo.ninja.bptree
 
 import org.apache.avro.Schema
-import org.apache.avro.SchemaBuilder
 import java.nio.ByteBuffer
 
-class Table(schema: Schema) {
+class Table(keySchema: Schema, valueSchema: Schema) {
     val key: AvroGenericRecord.IO
-    val record: AvroGenericRecord.IO
-    val internal: AvroGenericRecord.IO
+    val value: AvroGenericRecord.IO
 
     init {
         val isOrdered = { f: Schema.Field -> f.order() != Schema.Field.Order.IGNORE }
-        val newField = { f: Schema.Field -> Schema.Field(f.name(), f.schema(), f.doc(), f.defaultVal(), f.order()) }
-        val keyFields = schema.fields.takeWhile(isOrdered)
-        val valueFields = schema.fields.dropWhile(isOrdered)
-        if (keyFields.isEmpty()) {
-            throw IllegalArgumentException("At least the first field must be ordered: $schema")
+        if (keySchema.fields.none(isOrdered)) {
+            throw IllegalArgumentException("All key fields must be ordered: $keySchema")
         }
-        if (valueFields.isEmpty()) {
-            throw IllegalArgumentException("At least one order ignored field is required: $schema")
+        if (valueSchema.fields.any(isOrdered)) {
+            throw IllegalArgumentException("No ordered field is allowed in value: $valueSchema")
         }
-        if (valueFields.any(isOrdered)) {
-            throw IllegalArgumentException("No ordered field is allowed after the first ignored field: $schema")
-        }
-        record = AvroGenericRecord.IO(schema)
-
-        val keySchema = Schema.createRecord(keyFields.map(newField))
         key = AvroGenericRecord.IO(keySchema)
-
-        val idField = Schema.Field(INTERNAL_ID_FIELD_NAME,
-            SchemaBuilder.builder().intType(), "", 0, Schema.Field.Order.IGNORE)
-        val internalSchema = Schema.createRecord((keyFields + idField).map(newField))
-        internal = AvroGenericRecord.IO(internalSchema)
+        value = AvroGenericRecord.IO(valueSchema)
     }
 
-    inner class Record : AvroGenericRecord(record)
     inner class Key : AvroGenericRecord(key)
-    inner class Internal : AvroGenericRecord(internal) {
-        var childPageId: Int
-            get() = get(INTERNAL_ID_FIELD_NAME) as Int
-            set(value) = put(INTERNAL_ID_FIELD_NAME, value)
-    }
-
-    fun createRecord(byteBuffer: ByteBuffer): Record {
-        val record = Record()
-        record.load(byteBuffer)
-        return record
-    }
+    inner class Value : AvroGenericRecord(value)
 
     fun createKey(byteBuffer: ByteBuffer): Key {
         val record = Key()
@@ -54,8 +28,8 @@ class Table(schema: Schema) {
         return record
     }
 
-    fun createInternal(byteBuffer: ByteBuffer): Internal {
-        val record = Internal()
+    fun createValue(byteBuffer: ByteBuffer): Value {
+        val record = Value()
         record.load(byteBuffer)
         return record
     }

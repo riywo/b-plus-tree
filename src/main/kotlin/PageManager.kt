@@ -1,6 +1,7 @@
 package com.riywo.ninja.bptree
 
 import NodeType
+import KeyValue
 import java.nio.ByteBuffer
 
 class PageManager {
@@ -14,7 +15,7 @@ class PageManager {
         pool[page.id] = page
     }
 
-    fun create(nodeType: NodeType, initialRecords: MutableList<ByteBuffer>): Page {
+    fun create(nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
         val maxId = pool.keys.max() ?: 0
         val page = Page.new(maxId + 1, nodeType, initialRecords)
         put(page)
@@ -22,10 +23,10 @@ class PageManager {
     }
 
     fun split(page: Page): Page {
-        fun findSplitPoint(it: Iterator<IndexedValue<ByteBuffer>>, accumulatedSize: Int = 0): Int? {
+        fun findSplitPoint(it: Iterator<IndexedValue<KeyValue>>, accumulatedSize: Int = 0): Int? {
             return if (it.hasNext()) {
                 val next = it.next()
-                val newSize = accumulatedSize + next.value.limit()
+                val newSize = accumulatedSize + next.value.toAvroBytesSize()
                 if (Page.sizeOverhead + newSize*2 >= MAX_PAGE_SIZE) next.index else findSplitPoint(it, newSize)
             } else {
                 null

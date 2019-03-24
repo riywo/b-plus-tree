@@ -6,6 +6,6 @@
     {"name": "nodeType", "type": "NodeType"},
     {"name": "previousId", "type": "PageId"},
     {"name": "nextId", "type": "PageId"},
-    {"name": "records", "type": {"type": "array", "items": "bytes"} }
+    {"name": "records", "type": {"type": "array", "items": "KeyValue"} }
   ]
 }

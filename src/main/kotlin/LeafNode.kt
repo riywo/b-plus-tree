@@ -1,4 +1,4 @@
 package com.riywo.ninja.bptree
 
-open class LeafNode(table: Table, page: Page) : Node(table, page) {
+open class LeafNode(page: Page, compare: KeyCompare) : Node(page, compare) {
 }

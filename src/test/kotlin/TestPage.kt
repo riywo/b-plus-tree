@@ -1,6 +1,7 @@
 package com.riywo.ninja.bptree
 
 import NodeType
+import KeyValue
 import org.junit.jupiter.api.*
 import org.assertj.core.api.Assertions.*
 import java.lang.IndexOutOfBoundsException
@@ -8,18 +9,18 @@ import java.nio.ByteBuffer
 
 class TestPage {
     private var page = Page.new(1, NodeType.RootNode, mutableListOf())
-    private val byteBuffer = ByteBuffer.allocate(10)
+    private val keyValue = KeyValue(ByteBuffer.allocate(10), ByteBuffer.allocate(10))
 
     @BeforeEach
     fun init() {
         page = Page.new(1, NodeType.RootNode, mutableListOf())
-        page.insert(0, byteBuffer)
+        page.insert(0, keyValue)
         assertThat(page.id).isEqualTo(1)
         assertThat(page.nodeType).isEqualTo(NodeType.RootNode)
         assertThat(page.previousId).isEqualTo(null)
         assertThat(page.nextId).isEqualTo(null)
         assertThat(page.records.size).isEqualTo(1)
-        assertThat(page.records).isEqualTo(listOf(byteBuffer))
+        assertThat(page.records).isEqualTo(listOf(keyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
@@ -32,71 +33,71 @@ class TestPage {
 
     @Test
     fun `insert byteBuffer`() {
-        val newByteBuffer = ByteBuffer.allocate(9)
-        page.insert(0, newByteBuffer)
-        page.insert(2, newByteBuffer)
-        assertThat(page.records).isEqualTo(listOf(newByteBuffer, byteBuffer, newByteBuffer))
+        val newKeyValue = KeyValue(ByteBuffer.allocate(9), ByteBuffer.allocate(9))
+        page.insert(0, newKeyValue)
+        page.insert(2, newKeyValue)
+        assertThat(page.records).isEqualTo(listOf(newKeyValue, keyValue, newKeyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
     @Test
     fun `update byteBuffer`() {
-        val newByteBuffer = ByteBuffer.allocate(9)
-        page.update(0, newByteBuffer)
-        assertThat(page.records).isEqualTo(listOf(newByteBuffer))
+        val newKeyValue = KeyValue(ByteBuffer.allocate(9), ByteBuffer.allocate(9))
+        page.update(0, newKeyValue)
+        assertThat(page.records).isEqualTo(listOf(newKeyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
     @Test
     fun `delete byteBuffer`() {
         page.delete(0)
-        assertThat(page.records).isEqualTo(listOf<ByteBuffer>())
+        assertThat(page.records).isEqualTo(listOf<KeyValue>())
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
     @Test
     fun `insert full page`() {
-        val newByteBuffer = ByteBuffer.allocate(MAX_PAGE_SIZE)
+        val newKeyValue = KeyValue(ByteBuffer.allocate(9), ByteBuffer.allocate(MAX_PAGE_SIZE))
         assertThrows<PageFullException> {
-            page.insert(1, newByteBuffer)
+            page.insert(1, newKeyValue)
         }
-        assertThat(page.records).isEqualTo(listOf(byteBuffer, newByteBuffer))
+        assertThat(page.records).isEqualTo(listOf(keyValue, newKeyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
     @Test
     fun `update full page`() {
-        val newByteBuffer = ByteBuffer.allocate(MAX_PAGE_SIZE)
+        val newKeyValue = KeyValue(ByteBuffer.allocate(10), ByteBuffer.allocate(MAX_PAGE_SIZE))
         assertThrows<PageFullException> {
-            page.update(0, newByteBuffer)
+            page.update(0, newKeyValue)
         }
-        assertThat(page.records).isEqualTo(listOf(newByteBuffer))
+        assertThat(page.records).isEqualTo(listOf(newKeyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
     @Test
     fun `can't insert wrong index`() {
         for (i in listOf(-1, 2, 100)) {
-            assertThrows<IndexOutOfBoundsException> { page.insert(i, byteBuffer) }
+            assertThrows<IndexOutOfBoundsException> { page.insert(i, keyValue) }
         }
-        assertThat(page.records).isEqualTo(listOf(byteBuffer))
+        assertThat(page.records).isEqualTo(listOf(keyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
     @Test
     fun `can't insert 0 if previousId exists`() {
         page.previousId = 2
-        assertThrows<PageInsertingMinimumException> { page.insert(0, byteBuffer) }
-        assertThat(page.records).isEqualTo(listOf(byteBuffer))
+        assertThrows<PageInsertingMinimumException> { page.insert(0, keyValue) }
+        assertThat(page.records).isEqualTo(listOf(keyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
     @Test
     fun `can't update wrong index`() {
         for (i in listOf(-1, 1, 100)) {
-            assertThrows<IndexOutOfBoundsException> { page.update(i, byteBuffer) }
+            assertThrows<IndexOutOfBoundsException> { page.update(i, keyValue) }
         }
-        assertThat(page.records).isEqualTo(listOf(byteBuffer))
+        assertThat(page.records).isEqualTo(listOf(keyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 
@@ -105,7 +106,7 @@ class TestPage {
         for (i in listOf(-1, 1, 100)) {
             assertThrows<IndexOutOfBoundsException> { page.delete(i) }
         }
-        assertThat(page.records).isEqualTo(listOf(byteBuffer))
+        assertThat(page.records).isEqualTo(listOf(keyValue))
         assertThat(page.size).isEqualTo(page.dump().limit())
     }
 

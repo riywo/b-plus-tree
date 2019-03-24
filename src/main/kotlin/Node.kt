@@ -1,11 +1,12 @@
 package com.riywo.ninja.bptree
 
 import NodeType
+import KeyValue
 import java.nio.ByteBuffer
 
 abstract class Node(
-    protected val table: Table,
-    protected val page: Page
+    protected val page: Page,
+    protected val compare: KeyCompare
 ) {
     val id get() = page.id
     var type
@@ -18,8 +19,10 @@ abstract class Node(
         get() = page.nextId
         set(value) { page.nextId = value }
     val size get() = page.size
-    val records get() = page.records
-    val minRecord get() = page.records.first()
+    val records get() = page.records.asSequence().map { Record(it) }
+    val recordsReversed get() = page.records.reversed().asSequence().map { Record(it) }
+    val recordsSize get() = page.records.size
+    val minRecord get() = records.first()
 
     fun dump() = page.dump()
 
@@ -27,34 +30,39 @@ abstract class Node(
     fun isInternalNode(): Boolean = type == NodeType.InternalNode
     fun isRootNode(): Boolean = type == NodeType.RootNode
 
-    fun get(key: Table.Key): Table.Record? {
+    fun get(key: ByteBuffer): Record? {
         val result = find(key)
         return when (result) {
-            is FindResult.ExactMatch -> table.createRecord(result.byteBuffer)
+            is FindResult.ExactMatch -> Record(key, result.value)
             else -> null
         }
     }
 
-    fun put(record: Table.Record) {
-        val byteBuffer = record.toByteBuffer()
-        val result = find(record)
+    fun put(key: ByteBuffer, value: ByteBuffer) {
+        val keyValue = KeyValue(key, value)
+        val result = find(key)
         when(result) {
-            is FindResult.ExactMatch -> page.update(result.index, byteBuffer) // TODO merge new and old
-            is FindResult.FirstGraterThanMatch -> page.insert(result.index, byteBuffer)
-            null -> page.insert(0, byteBuffer)
+            is FindResult.ExactMatch -> page.update(result.index, keyValue)
+            is FindResult.FirstGraterThanMatch -> page.insert(result.index, keyValue)
+            null -> page.insert(0, keyValue)
         }
     }
 
-    fun delete(key: Table.Key) {
+    fun delete(key: ByteBuffer) {
         val result = find(key)
         if (result is FindResult.ExactMatch) page.delete(result.index)
     }
+
+    fun get(record: Record) = get(record.key)
+    fun put(record: Record) = put(record.key, record.value)
+    fun delete(record: Record) = delete(record.key)
 
     fun split(pageManager: PageManager): Page {
         return pageManager.split(page)
     }
 
     fun printNode(pageManager: PageManager, indent: Int = 0) {
+/**
         when (type) {
             NodeType.LeafNode -> {
                 println("${"    ".repeat(indent)}$type(id:$id size=$size keys=${records.map{table.createKey(it)}})")
@@ -74,23 +82,24 @@ abstract class Node(
                 }
             }
         }
+**/
     }
 
     protected sealed class FindResult {
-        data class ExactMatch(val index: Int, val byteBuffer: ByteBuffer) : FindResult()
+        data class ExactMatch(val index: Int, val value: ByteBuffer) : FindResult()
         data class FirstGraterThanMatch(val index: Int) : FindResult()
     }
 
-    protected fun find(key: AvroGenericRecord): FindResult? {
-        if (records.isEmpty()) return null
-        val keyBytes = table.key.encode(key).toByteArray()
-        records.forEachIndexed { index, byteBuffer ->
-            val bytes = byteBuffer.toByteArray()
-            when(table.key.compare(bytes, keyBytes)) {
-                0 -> return FindResult.ExactMatch(index, byteBuffer)
+    protected fun find(keyByteBuffer: ByteBuffer): FindResult? {
+        if (page.records.isEmpty()) return null
+        val keyBytes = keyByteBuffer.toByteArray()
+        page.records.forEachIndexed { index, keyValue ->
+            val bytes = keyValue.getKey().toByteArray()
+            when(compare(bytes, keyBytes)) {
+                0 -> return FindResult.ExactMatch(index, keyValue.getValue())
                 1 -> return FindResult.FirstGraterThanMatch(index)
             }
         }
-        return FindResult.FirstGraterThanMatch(page.records.size)
+        return FindResult.FirstGraterThanMatch(recordsSize)
     }
 }

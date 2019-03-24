@@ -1,61 +1,60 @@
 package com.riywo.ninja.bptree
 
 import java.lang.Exception
+import java.nio.ByteBuffer
 
-class Tree(private val table: Table, private val pageManager: PageManager, rootPage: Page) {
-    private val rootNode: RootNode = RootNode(table, rootPage)
+class Tree(private val pageManager: PageManager, private val compare: KeyCompare, rootPage: Page) {
+    private val rootNode: RootNode = RootNode(rootPage, compare)
 
-    fun get(key: Table.Key): Table.Record? {
+    private fun compare(a: ByteBuffer, b: ByteBuffer) = compare(a.toByteArray(), b.toByteArray())
+
+    fun get(key: ByteBuffer): Record? {
         val result = findLeafNode(key)
         return result.leafNode.get(key)
     }
 
-    fun put(record: Table.Record) {
-        val result = findLeafNode(record)
+    fun put(key: ByteBuffer, value: ByteBuffer) {
+        val result = findLeafNode(key)
         try {
-            result.leafNode.put(record)
+            result.leafNode.put(key, value)
         } catch (e: PageFullException) {
             splitNode(result.leafNode, result.pathFromRoot.reversed().iterator())
         }
     }
 
-    fun scan(startKey: Table.Key, endKey: Table.Key): Sequence<Table.Record> {
-        val isAscending = table.key.compare(startKey, endKey) == -1
-        val startByteBuffer = startKey.toByteBuffer()
-        val endByteBuffer = endKey.toByteBuffer()
+    fun scan(startKey: ByteBuffer, endKey: ByteBuffer): Sequence<Record> {
+        val isAscending = compare(startKey, endKey) == -1
         val firstNode = findLeafNode(startKey).leafNode
         return if (isAscending) {
             generateSequence(firstNode) { createLeafNode(it.nextId) }
-                .flatMap { it.records.asSequence() }
-                .dropWhile { table.key.compare(it, startByteBuffer) == -1 } // it < startKey
-                .takeWhile { table.key.compare(it, endByteBuffer) != 1 }    // it <= endKey
-                .map { table.createRecord(it) }
+                .flatMap { it.records }
+                .dropWhile { compare(it.key, startKey) == -1 } // it < startKey
+                .takeWhile { compare(it.key, endKey) != 1 }    // it <= endKey
         } else {
             generateSequence(firstNode) { createLeafNode(it.previousId) }
-                .flatMap { it.records.reversed().asSequence() }
-                .dropWhile { table.key.compare(it, startByteBuffer) == 1 } // it > startKey
-                .takeWhile { table.key.compare(it, endByteBuffer) != -1 }  // it >= endKey
-                .map { table.createRecord(it) }
+                .flatMap { it.recordsReversed }
+                .dropWhile { compare(it.key, startKey) == 1 } // it > startKey
+                .takeWhile { compare(it.key, endKey) != -1 }  // it >= endKey
         }
     }
 
     private fun createLeafNode(id: Int?): LeafNode? {
         val page = pageManager.get(id) ?: return null
-        return LeafNode(table, page)
+        return LeafNode(page, compare)
     }
 
     private data class FindResult(val leafNode: LeafNode, val pathFromRoot: List<InternalNode>)
 
     private fun findLeafNode(
-        key: AvroGenericRecord,
+        key: ByteBuffer,
         parentNode: InternalNode = rootNode, pathFromRoot: List<InternalNode> = listOf()): FindResult {
         if (parentNode.isLeafNode()) return FindResult(parentNode, pathFromRoot) // No root yet
         val newPathFromRoot = pathFromRoot + parentNode
         val childPageId = parentNode.findChildPageId(key)
         val childPage = pageManager.get(childPageId) ?: throw Exception() // TODO
         return when (childPage.nodeType) {
-            NodeType.LeafNode -> FindResult(LeafNode(table, childPage), newPathFromRoot)
-            NodeType.InternalNode -> findLeafNode(key, InternalNode(table, childPage), newPathFromRoot)
+            NodeType.LeafNode -> FindResult(LeafNode(childPage, compare), newPathFromRoot)
+            NodeType.InternalNode -> findLeafNode(key, InternalNode(childPage, compare), newPathFromRoot)
             else -> throw Exception() // TODO
         }
     }
@@ -64,8 +63,8 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
         if (pathToRoot.hasNext()) {
             val parent = pathToRoot.next()
             val newNode = when (node.type) {
-                NodeType.LeafNode -> LeafNode(table, node.split(pageManager))
-                NodeType.InternalNode -> InternalNode(table, node.split(pageManager))
+                NodeType.LeafNode -> LeafNode(node.split(pageManager), compare)
+                NodeType.InternalNode -> InternalNode(node.split(pageManager), compare)
                 else -> throw Exception() // TODO
             }
             try {
@@ -81,8 +80,8 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
     private fun splitRootNode() {
         val (leftPage, rightPage) = rootNode.splitRoot(pageManager)
         val (leftNode, rightNode) = when (rootNode.type) {
-            NodeType.LeafNode -> Pair(LeafNode(table, leftPage), LeafNode(table, rightPage))
-            NodeType.RootNode -> Pair(InternalNode(table, leftPage), InternalNode(table, rightPage))
+            NodeType.LeafNode -> Pair(LeafNode(leftPage, compare), LeafNode(rightPage, compare))
+            NodeType.RootNode -> Pair(InternalNode(leftPage, compare), InternalNode(rightPage, compare))
             else -> throw Exception() // TODO
         }
         rootNode.addChildNode(leftNode)
@@ -90,10 +89,14 @@ class Tree(private val table: Table, private val pageManager: PageManager, rootP
         rootNode.type = NodeType.RootNode
     }
 
-    fun delete(key: Table.Key) {
+    fun delete(key: ByteBuffer) {
         val result = findLeafNode(key)
         result.leafNode.delete(key) // TODO merge
     }
+
+    fun get(record: Record) = get(record.key)
+    fun put(record: Record) = put(record.key, record.value)
+    fun delete(record: Record) = delete(record.key)
 
     fun debug() {
         rootNode.printNode(pageManager)

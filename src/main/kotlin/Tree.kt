@@ -3,8 +3,8 @@ package com.riywo.ninja.bptree
 import java.lang.Exception
 import java.nio.ByteBuffer
 
-class Tree(private val pageManager: PageManager, private val compare: KeyCompare, rootPage: Page) {
-    private val rootNode: RootNode = RootNode(rootPage, compare)
+class Tree(private val pageManager: PageManager, private val compare: KeyCompare) {
+    private val rootNode: RootNode = RootNode(pageManager.getRootPage(), compare)
     private fun compare(a: ByteBuffer, b: ByteBuffer) = compare(a.toByteArray(), b.toByteArray())
 
     fun get(key: ByteBuffer): Record? {
@@ -16,10 +16,21 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
         val result = findLeafNode(key)
         try {
             result.leafNode.put(key, value)
+            result.leafNode.commit(pageManager)
         } catch (e: PageFullException) {
             splitNode(result.leafNode, result.pathFromRoot.reversed().iterator())
         }
     }
+
+    fun delete(key: ByteBuffer) {
+        val result = findLeafNode(key)
+        result.leafNode.delete(key) // TODO merge
+        result.leafNode.commit(pageManager)
+    }
+
+    fun get(record: Record) = get(record.key)
+    fun put(record: Record) = put(record.key, record.value)
+    fun delete(record: Record) = delete(record.key)
 
     fun scan(startKey: ByteBuffer, endKey: ByteBuffer): Sequence<Record> {
         val isAscending = compare(startKey, endKey) == -1
@@ -68,6 +79,7 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
             }
             try {
                 parent.addChildNode(newNode)
+                parent.commit(pageManager)
             } catch (e: PageFullException) {
                 splitNode(parent, pathToRoot)
             }
@@ -86,16 +98,10 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
         rootNode.addChildNode(leftNode)
         rootNode.addChildNode(rightNode)
         rootNode.type = NodeType.RootNode
+        leftNode.commit(pageManager)
+        rightNode.commit(pageManager)
+        rootNode.commit(pageManager)
     }
-
-    fun delete(key: ByteBuffer) {
-        val result = findLeafNode(key)
-        result.leafNode.delete(key) // TODO merge
-    }
-
-    fun get(record: Record) = get(record.key)
-    fun put(record: Record) = put(record.key, record.value)
-    fun delete(record: Record) = delete(record.key)
 
     fun debug() {
         rootNode.printNode(pageManager)

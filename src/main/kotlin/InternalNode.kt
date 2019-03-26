@@ -1,6 +1,5 @@
 package com.riywo.ninja.bptree
 
-import KeyValue
 import org.apache.avro.io.DecoderFactory
 import org.apache.avro.io.EncoderFactory
 import java.io.ByteArrayOutputStream
@@ -42,12 +41,7 @@ open class InternalNode(page: Page, compare: KeyCompare) : LeafNode(page, compar
 
     fun addChildNode(node: Node) {
         val minKey = node.minRecord.key
-        val internal = KeyValue(minKey, encodeChildPageId(node.id))
-        val result = find(minKey)
-        when (result) {
-            is FindResult.FirstGraterThanMatch -> page.insert(result.index, internal)
-            null -> page.insert(0, internal)
-            else -> throw Exception() // TODO
-        }
+        val childPageId = encodeChildPageId(node.id)
+        put(minKey, childPageId)
     }
 }

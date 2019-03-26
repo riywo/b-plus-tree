@@ -65,6 +65,10 @@ abstract class Node(
         return pageManager.split(page)
     }
 
+    fun commit(pageManager: PageManager) {
+        pageManager.commit(page)
+    }
+
     fun printNode(pageManager: PageManager, indent: Int = 0) {
         when (type) {
             NodeType.LeafNode -> {

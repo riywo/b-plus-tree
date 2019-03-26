@@ -3,19 +3,30 @@ package com.riywo.ninja.bptree
 import NodeType
 import KeyValue
 
-class PageManager {
+class PageManager(filePath: String, initial: Boolean = false) {
+    private val fileManager = FileManager(filePath)
     private val pool = hashMapOf<Int, Page>()
+
+    init {
+        if (initial) {
+            val rootPage = createPage(ROOT_PAGE_ID, NodeType.LeafNode, mutableListOf())
+            commit(rootPage)
+        }
+    }
 
     fun get(id: Int?): Page? {
         if (id == null) return null
-        return pool[id]
+        return if (pool.contains(id)) {
+            pool[id]
+        } else {
+            val page = fileManager.read(id)
+            pool[id] = page
+            page
+        }
     }
 
     fun create(nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
-        val maxId = pool.keys.max() ?: 0
-        val page = Page.new(maxId + 1, nodeType, initialRecords)
-        pool[page.id] = page
-        return page
+        return createPage(getMaxId() + 1, nodeType, initialRecords)
     }
 
     fun split(page: Page): Page {
@@ -34,12 +45,35 @@ class PageManager {
         val nextPage = get(page.nextId)
         connect(page, newPage)
         connect(newPage, nextPage)
+        commit(page)
+        commit(newPage)
+        commit(nextPage)
         return newPage
     }
 
     fun move(page: Page, nodeType: NodeType, range: IntRange): Page {
         val records = range.map { page.delete(range.first) }.toMutableList()
         return create(nodeType, records)
+    }
+
+    fun commit(page: Page?) {
+        if (page != null) {
+            fileManager.write(page)
+        }
+    }
+
+    fun getRootPage(): Page {
+        return get(ROOT_PAGE_ID) ?: throw Exception() // TODO
+    }
+
+    private fun createPage(id: Int, nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
+        val page = Page.new(id, nodeType, initialRecords)
+        pool[page.id] = page
+        return page
+    }
+
+    private fun getMaxId(): Int {
+        return pool.keys.max() ?: 0 // TODO
     }
 
     private fun connect(previous: Page?, next: Page?) {

@@ -3,13 +3,11 @@ package com.riywo.ninja.bptree
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.io.*
 import org.assertj.core.api.Assertions.*
-import org.assertj.core.data.Offset
-import java.nio.ByteBuffer
 import java.nio.file.Path
 
 class TestFileManager {
     private val page0 = Page.new(0, NodeType.LeafNode, mutableListOf())
-    private val page1 = Page.new(1, NodeType.LeafNode, mutableListOf())
+    private val page100 = Page.new(100, NodeType.LeafNode, mutableListOf())
     private var fileManager: FileManager? = null
 
     @BeforeEach
@@ -18,15 +16,15 @@ class TestFileManager {
         fileManager = FileManager(file.toString())
         fileManager!!.write(page0)
         assertThat(fileManager!!.fileSize.toInt()).isEqualTo(MAX_PAGE_SIZE)
-        fileManager!!.write(page1)
-        assertThat(fileManager!!.fileSize.toInt()).isEqualTo(MAX_PAGE_SIZE*2)
+        fileManager!!.write(page100)
+        assertThat(fileManager!!.fileSize.toInt()).isEqualTo(MAX_PAGE_SIZE*101)
     }
 
     @Test
     fun read() {
         val readPage0 = fileManager!!.read(0)
-        val readPage1 = fileManager!!.read(1)
+        val readPage100 = fileManager!!.read(100)
         assertThat(readPage0.id).isEqualTo(page0.id)
-        assertThat(readPage1.id).isEqualTo(page1.id)
+        assertThat(readPage100.id).isEqualTo(page100.id)
     }
 }

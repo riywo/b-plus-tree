@@ -1,72 +1,75 @@
 package com.riywo.ninja.bptree
 
 import org.junit.jupiter.api.*
+import org.junit.jupiter.api.io.*
 import org.assertj.core.api.Assertions.*
 import java.nio.ByteBuffer
+import java.nio.file.Path
 
 class TestTree {
     private val compare: KeyCompare = { a, b ->
         a[0].compareTo(b[0])
     }
-    private var pageManager = PageManager()
-    private var tree = Tree(pageManager, compare, pageManager.create(NodeType.LeafNode, mutableListOf()))
+    private var pageManager: PageManager? = null
+    private var tree: Tree? = null
     private val record = Record(byteArrayOf(1), byteArrayOf(1))
 
     @BeforeEach
-    fun init() {
-        pageManager = PageManager()
-        tree = Tree(pageManager, compare, pageManager.create(NodeType.LeafNode, mutableListOf()))
-        tree.put(record)
+    fun init(@TempDir tempDir: Path) {
+        pageManager = PageManager(tempDir.resolve("test.db").toString(), true)
+        //tree = Tree(pageManager!!, compare, pageManager!!.create(NodeType.LeafNode, mutableListOf()))
+        tree = Tree(pageManager!!, compare)
+        tree!!.put(record)
     }
 
     @Test
     fun `get no-root`() {
-        assertThat(tree.get(record.key)).isEqualTo(record)
+        assertThat(tree!!.get(record.key)).isEqualTo(record)
     }
 
     @Test
     fun `update no-root`() {
         val newRecord = Record(record.key, byteArrayOf(2))
-        tree.put(newRecord)
-        assertThat(tree.get(record.key)).isEqualTo(newRecord)
+        tree!!.put(newRecord)
+        assertThat(tree!!.get(record.key)).isEqualTo(newRecord)
     }
 
     @Test
     fun `insert ordered`() {
         val records = (2..120).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/5)) }
         for (newRecord in records) {
-            tree.put(newRecord)
+            tree!!.put(newRecord)
         }
-        val scanned = tree.scan(records.first().key, records.last().key).toList()
+        val scanned = tree!!.scan(records.first().key, records.last().key).toList()
         assertThat(scanned).isEqualTo(records)
-        val scannedReversed = tree.scan(records.last().key, records.first().key).toList()
+        val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
-        //tree.debug()
+        //tree!!.debug()
     }
 
     @Test
     fun `insert reversed ordered`() {
         val records = (2..120).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/5)) }
         for (newRecord in records.reversed()) {
-            tree.put(newRecord)
+            tree!!.put(newRecord)
         }
-        val scanned = tree.scan(records.first().key, records.last().key).toList()
+        val scanned = tree!!.scan(records.first().key, records.last().key).toList()
         assertThat(scanned).isEqualTo(records)
-        val scannedReversed = tree.scan(records.last().key, records.first().key).toList()
+        val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
-        //tree.debug()
+        //tree!!.debug()
     }
 
     @Test
     fun `insert shuffled ordered`() {
         val records = (2..120).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/5)) }
         for (newRecord in records.shuffled()) {
-            tree.put(newRecord)
+            tree!!.put(newRecord)
         }
-        val scanned = tree.scan(records.first().key, records.last().key).toList()
+        val scanned = tree!!.scan(records.first().key, records.last().key).toList()
         assertThat(scanned).isEqualTo(records)
-        val scannedReversed = tree.scan(records.last().key, records.first().key).toList()
+        val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
-        //tree.debug()
+        //tree!!.debug()
     }
 }

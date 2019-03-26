@@ -1,7 +1,6 @@
 package com.riywo.ninja.bptree
 
 import java.io.RandomAccessFile
-import java.io.File
 
 class FileManager(filePath: String) {
     private val file = RandomAccessFile(filePath, "rws")

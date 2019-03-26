@@ -10,28 +10,37 @@ class TestTree {
     private val compare: KeyCompare = { a, b ->
         a[0].compareTo(b[0])
     }
+    private var filePath: String? = null
     private var pageManager: PageManager? = null
     private var tree: Tree? = null
     private val record = Record(byteArrayOf(1), byteArrayOf(1))
 
     @BeforeEach
     fun init(@TempDir tempDir: Path) {
-        pageManager = PageManager(tempDir.resolve("test.db").toString(), true)
+        filePath = tempDir.resolve("test.db").toString()
+        pageManager = PageManager(filePath!!, true)
         //tree = Tree(pageManager!!, compare, pageManager!!.create(NodeType.LeafNode, mutableListOf()))
         tree = Tree(pageManager!!, compare)
         tree!!.put(record)
     }
 
     @Test
-    fun `get no-root`() {
+    fun `get root-only`() {
         assertThat(tree!!.get(record.key)).isEqualTo(record)
     }
 
     @Test
-    fun `update no-root`() {
+    fun `update root-only`() {
         val newRecord = Record(record.key, byteArrayOf(2))
         tree!!.put(newRecord)
         assertThat(tree!!.get(record.key)).isEqualTo(newRecord)
+    }
+
+    @Test
+    fun `load root-only`() {
+        val loadedPageManager = PageManager(filePath!!)
+        val loadedTree = Tree(loadedPageManager, compare)
+        assertThat(loadedTree.get(record.key)).isEqualTo(record)
     }
 
     @Test

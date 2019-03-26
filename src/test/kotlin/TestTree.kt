@@ -19,7 +19,6 @@ class TestTree {
     fun init(@TempDir tempDir: Path) {
         filePath = tempDir.resolve("test.db").toString()
         pageManager = PageManager(filePath!!, true)
-        //tree = Tree(pageManager!!, compare, pageManager!!.create(NodeType.LeafNode, mutableListOf()))
         tree = Tree(pageManager!!, compare)
         tree!!.put(record)
     }

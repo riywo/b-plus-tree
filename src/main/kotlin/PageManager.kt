@@ -3,16 +3,8 @@ package com.riywo.ninja.bptree
 import NodeType
 import KeyValue
 
-class PageManager(filePath: String, initial: Boolean = false) {
-    private val fileManager = FileManager(filePath)
+class PageManager(private val fileManager: FileManager) {
     private val pool = hashMapOf<Int, Page>()
-
-    init {
-        if (initial) {
-            val rootPage = createPage(ROOT_PAGE_ID, NodeType.LeafNode, mutableListOf())
-            commit(rootPage)
-        }
-    }
 
     fun get(id: Int?): Page? {
         if (id == null) return null

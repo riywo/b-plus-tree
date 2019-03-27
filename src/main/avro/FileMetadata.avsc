@@ -1,0 +1,7 @@
+{
+  "name": "FileMetadata",
+  "type": "record",
+  "fields": [
+    {"name": "lastFreedPageId", "type": "PageId"}
+  ]
+}

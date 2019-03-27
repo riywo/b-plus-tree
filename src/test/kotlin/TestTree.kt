@@ -18,7 +18,7 @@ class TestTree {
     @BeforeEach
     fun init(@TempDir tempDir: Path) {
         filePath = tempDir.resolve("test.db").toString()
-        pageManager = PageManager(filePath!!, true)
+        pageManager = PageManager(FileManager.new(filePath!!))
         tree = Tree(pageManager!!, compare)
         tree!!.put(record)
     }
@@ -37,7 +37,7 @@ class TestTree {
 
     @Test
     fun `load root-only`() {
-        val loadedPageManager = PageManager(filePath!!)
+        val loadedPageManager = PageManager(FileManager.load(filePath!!))
         val loadedTree = Tree(loadedPageManager, compare)
         assertThat(loadedTree.get(record.key)).isEqualTo(record)
     }

@@ -8,8 +8,7 @@ import java.nio.ByteBuffer
 private val logger = mu.KotlinLogging.logger {}
 
 class Page private constructor(
-    private val data: PageData,
-    private var byteSize: Int = 0
+    private val data: PageData
 ) {
     companion object {
         fun new(id: Int, nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
@@ -19,14 +18,10 @@ class Page private constructor(
 
         fun load(byteBuffer: ByteBuffer): Page {
             val data = PageData.fromByteBuffer(byteBuffer)
-            return Page(data, byteBuffer.limit())
+            return Page(data)
         }
 
         val sizeOverhead = Page(emptyPageData).dump().limit()
-    }
-
-    init {
-        if (byteSize == 0) byteSize = dump().limit()
     }
 
     val id: Int by data
@@ -35,6 +30,8 @@ class Page private constructor(
     var nextId: Int? by data
     val records: List<KeyValue> get() = data.getRecords()
     val size: Int get() = byteSize
+
+    private var byteSize = dump().limit()
 
     fun dump(): ByteBuffer = data.toByteBuffer()
 

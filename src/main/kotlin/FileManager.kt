@@ -1,38 +1,52 @@
 package com.riywo.ninja.bptree
 
 import FileMetadata
+import NodeType
+import KeyValue
+import java.io.EOFException
 import java.io.RandomAccessFile
+import java.lang.Exception
 
-class FileManager private constructor(filePath: String, initial: Boolean = false) {
+class FileManager private constructor(filePath: String, initialMetadata: FileMetadata? = null) {
     companion object {
         val metadataOffset = emptyFileMetadata.toByteBuffer().limit()
-        fun new(filePath: String) = FileManager(filePath, true)
+
+        fun new(filePath: String): FileManager {
+            val fileManager = FileManager(filePath, createFileMetadata())
+            val rootPage = fileManager.allocate(NodeType.LeafNode, mutableListOf())
+            fileManager.write(rootPage)
+            return fileManager
+        }
+
         fun load(filePath: String) = FileManager(filePath)
     }
 
-    private val metadata: FileMetadata
     private val file = RandomAccessFile(filePath, "rws")
+    private val metadata = initialMetadata ?: loadMetadata()
     private val buffer = ByteArray(MAX_PAGE_SIZE)
     val fileSize get() = file.length()
-    private var lastFreedPageId
-        get() = metadata.getLastFreedPageId()
-        set(value) { metadata.setLastFreedPageId(value) }
+    private var nextFreePageId: Int? by metadata
 
-    init {
-        if (initial) {
-            metadata = createFileMetadata()
-            writeMetadata()
-            val rootPage = Page.new(ROOT_PAGE_ID, NodeType.LeafNode, mutableListOf())
-            write(rootPage)
+    fun allocate(nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
+        val freePageId = nextFreePageId ?: throw Exception() // TODO
+        val freePage = read(freePageId)
+        nextFreePageId = if (freePage == null) {
+            freePageId + 1
         } else {
-            metadata = loadMetadata()
+            freePage.nextId ?: throw Exception() // TODO
         }
+        writeMetadata()
+        return Page.new(freePageId, nodeType, initialRecords)
     }
 
-    fun read(id: Int): Page {
-        seek(id)
-        file.readFully(buffer)
-        return Page.load(buffer.toByteBuffer())
+    fun read(id: Int): Page? {
+        return try {
+            seek(id)
+            file.readFully(buffer)
+            Page.load(buffer.toByteBuffer())
+        } catch (e: EOFException) {
+            null
+        }
     }
 
     fun write(page: Page) {

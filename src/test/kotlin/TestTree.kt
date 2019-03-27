@@ -42,7 +42,6 @@ class TestTree {
     }
 
     @Test
-
     fun `load root-only`() {
         val loadedPageManager = PageManager(FileManager.load(filePath!!))
         val loadedTree = Tree(loadedPageManager, compare)

@@ -5,25 +5,25 @@ import kotlin.reflect.KProperty
 
 fun createFileMetadata(): FileMetadata {
     val builder = FileMetadata.newBuilder()
-    builder.lastFreedPageId = createPageId()
+    builder.nextFreePageId = createPageId(ROOT_PAGE_ID)
     return builder.build()
 }
 
 val emptyFileMetadata = createFileMetadata()
 
 enum class FileMetadataProperties {
-    LastFreedPageId
+    NextFreePageId
 }
 
 inline operator fun <reified T> FileMetadata.getValue(thisRef: Any, property: KProperty<*>): T {
     return when (FileMetadataProperties.valueOf(property.name.capitalize())) {
-        FileMetadataProperties.LastFreedPageId -> getLastFreedPageId().getInt() as T
+        FileMetadataProperties.NextFreePageId -> getNextFreePageId().getInt() as T
     }
 }
 
 operator fun <T> FileMetadata.setValue(thisRef: Any, property: KProperty<*>, value: T) {
     when (FileMetadataProperties.valueOf(property.name.capitalize())) {
-        FileMetadataProperties.LastFreedPageId -> getLastFreedPageId().putInt(value as Int?)
+        FileMetadataProperties.NextFreePageId -> getNextFreePageId().putInt(value as Int?)
         else -> throw Exception() // TODO
     }
 }

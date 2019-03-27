@@ -11,14 +11,16 @@ class PageManager(private val fileManager: FileManager) {
         return if (pool.contains(id)) {
             pool[id]
         } else {
-            val page = fileManager.read(id)
+            val page = fileManager.read(id) ?: throw java.lang.Exception() // TODO
             pool[id] = page
             page
         }
     }
 
-    fun create(nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
-        return createPage(getMaxId() + 1, nodeType, initialRecords)
+    fun allocate(nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
+        val page = fileManager.allocate(nodeType, initialRecords)
+        pool[page.id] = page
+        return page
     }
 
     fun split(page: Page): Page {
@@ -45,7 +47,7 @@ class PageManager(private val fileManager: FileManager) {
 
     fun move(page: Page, nodeType: NodeType, range: IntRange): Page {
         val records = range.map { page.delete(range.first) }.toMutableList()
-        return create(nodeType, records)
+        return allocate(nodeType, records)
     }
 
     fun commit(page: Page?) {
@@ -56,16 +58,6 @@ class PageManager(private val fileManager: FileManager) {
 
     fun getRootPage(): Page {
         return get(ROOT_PAGE_ID) ?: throw Exception() // TODO
-    }
-
-    private fun createPage(id: Int, nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
-        val page = Page.new(id, nodeType, initialRecords)
-        pool[page.id] = page
-        return page
-    }
-
-    private fun getMaxId(): Int {
-        return pool.keys.max() ?: 0 // TODO
     }
 
     private fun connect(previous: Page?, next: Page?) {

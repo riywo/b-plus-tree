@@ -20,7 +20,7 @@ class TestPageManager {
     @BeforeEach
     fun init(@TempDir tempDir: Path) {
         pageManager = PageManager(FileManager.new(tempDir.resolve("test.db").toString()))
-        page = pageManager!!.create(NodeType.RootNode, MutableList(numRecords){keyValue})
+        page = pageManager!!.allocate(NodeType.RootNode, MutableList(numRecords){keyValue})
         assertThat(pageManager!!.get(1)).isEqualTo(page)
         assertThat(page!!.records.size).isEqualTo(numRecords)
     }

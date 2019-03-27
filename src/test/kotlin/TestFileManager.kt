@@ -22,9 +22,9 @@ class TestFileManager {
 
     @Test
     fun read() {
-        val rootPage = fileManager!!.read(ROOT_PAGE_ID)
-        val readPage1 = fileManager!!.read(1)
-        val readPage100 = fileManager!!.read(100)
+        val rootPage = fileManager!!.read(ROOT_PAGE_ID)!!
+        val readPage1 = fileManager!!.read(1)!!
+        val readPage100 = fileManager!!.read(100)!!
         assertThat(rootPage.id).isEqualTo(ROOT_PAGE_ID)
         assertThat(readPage1.id).isEqualTo(page1.id)
         assertThat(readPage100.id).isEqualTo(page100.id)

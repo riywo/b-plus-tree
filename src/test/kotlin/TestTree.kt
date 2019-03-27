@@ -36,6 +36,13 @@ class TestTree {
     }
 
     @Test
+    fun `delete root-only`() {
+        tree!!.delete(record)
+        assertThat(tree!!.get(record.key)).isEqualTo(null)
+    }
+
+    @Test
+
     fun `load root-only`() {
         val loadedPageManager = PageManager(FileManager.load(filePath!!))
         val loadedTree = Tree(loadedPageManager, compare)

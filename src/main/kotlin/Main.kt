@@ -39,6 +39,7 @@ class Main(file: File) {
             } catch (e: Exception) {
                 System.err.println(e)
             }
+            println("")
         }
     }
 

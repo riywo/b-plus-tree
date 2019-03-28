@@ -28,7 +28,7 @@ class PageManager(private val fileManager: FileManager) {
             return if (it.hasNext()) {
                 val next = it.next()
                 val newSize = accumulatedSize + next.value.toAvroBytesSize()
-                if (Page.sizeOverhead*2 + newSize*2 >= MAX_PAGE_SIZE) next.index else findSplitPoint(it, newSize)
+                if (Page.sizeOverhead*2 + newSize*2 > MAX_PAGE_SIZE) next.index else findSplitPoint(it, newSize)
             } else {
                 null
             }

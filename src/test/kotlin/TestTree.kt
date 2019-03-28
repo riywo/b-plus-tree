@@ -9,7 +9,7 @@ import java.io.File
 
 class TestTree {
     private val compare: KeyCompare = { a, b ->
-        a[0].compareTo(b[0])
+        a[0].toUInt().compareTo(b[0].toUInt())
     }
     private val keySchema = SchemaBuilder.builder().record("key").fields()
         .name("key").type().intType().noDefault().endRecord()
@@ -26,16 +26,17 @@ class TestTree {
         val fileManager = FileManager.new(file!!, keySchema, valueSchema)
         pageManager = PageManager(fileManager)
         tree = Tree(pageManager!!, compare)
-        tree!!.put(record)
     }
 
     @Test
     fun `get root-only`() {
+        tree!!.put(record)
         assertThat(tree!!.get(record.key)).isEqualTo(record)
     }
 
     @Test
     fun `update root-only`() {
+        tree!!.put(record)
         val newRecord = Record(record.key, byteArrayOf(2))
         tree!!.put(newRecord)
         assertThat(tree!!.get(record.key)).isEqualTo(newRecord)
@@ -43,12 +44,14 @@ class TestTree {
 
     @Test
     fun `delete root-only`() {
+        tree!!.put(record)
         tree!!.delete(record)
         assertThat(tree!!.get(record.key)).isEqualTo(null)
     }
 
     @Test
     fun `load root-only`() {
+        tree!!.put(record)
         val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
         assertThat(loadedTree.get(record.key)).isEqualTo(record)
@@ -56,7 +59,7 @@ class TestTree {
 
     @Test
     fun `insert ordered`() {
-        val records = (2..120).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/5)) }
+        val records = (1..250).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records) {
             tree!!.put(newRecord)
         }
@@ -64,7 +67,7 @@ class TestTree {
         assertThat(scanned).isEqualTo(records)
         val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
-        //tree!!.debug()
+        tree!!.debug()
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
@@ -74,7 +77,7 @@ class TestTree {
 
     @Test
     fun `insert reversed ordered`() {
-        val records = (2..120).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/5)) }
+        val records = (1..250).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records.reversed()) {
             tree!!.put(newRecord)
         }
@@ -82,7 +85,7 @@ class TestTree {
         assertThat(scanned).isEqualTo(records)
         val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
-        //tree!!.debug()
+        tree!!.debug()
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
@@ -92,7 +95,7 @@ class TestTree {
 
     @Test
     fun `insert shuffled ordered`() {
-        val records = (2..120).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/5)) }
+        val records = (1..250).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records.shuffled()) {
             tree!!.put(newRecord)
         }
@@ -100,7 +103,7 @@ class TestTree {
         assertThat(scanned).isEqualTo(records)
         val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
-        //tree!!.debug()
+        tree!!.debug()
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)

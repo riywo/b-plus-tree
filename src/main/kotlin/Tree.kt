@@ -35,13 +35,15 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
     fun scan(startKey: ByteBuffer, endKey: ByteBuffer): Sequence<Record> {
         val isAscending = compare(startKey, endKey) < 0
         val firstNode = findLeafNode(startKey).leafNode
+        val lastNode = findLeafNode(endKey).leafNode
+
         return if (isAscending) {
-            generateSequence(firstNode) { createLeafNode(it.nextId) }
+            generateSequence(firstNode) { if(it == lastNode) null else createLeafNode(it.nextId) }
                 .flatMap { it.records }
                 .dropWhile { compare(it.key, startKey) < 0 } // it < startKey
                 .takeWhile { compare(it.key, endKey) <= 0 }    // it <= endKey
         } else {
-            generateSequence(firstNode) { createLeafNode(it.previousId) }
+            generateSequence(firstNode) { if(it == lastNode) null else createLeafNode(it.previousId) }
                 .flatMap { it.recordsReversed }
                 .dropWhile { compare(it.key, startKey) > 0 } // it > startKey
                 .takeWhile { compare(it.key, endKey) >= 0 }  // it >= endKey
@@ -86,6 +88,7 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
         } else {
             splitRootNode()
         }
+        debug()
     }
 
     private fun splitRootNode() {

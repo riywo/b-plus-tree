@@ -1,24 +1,30 @@
 package com.riywo.ninja.bptree
 
+import org.apache.avro.SchemaBuilder
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.io.*
 import org.assertj.core.api.Assertions.*
 import java.nio.ByteBuffer
-import java.nio.file.Path
+import java.io.File
 
 class TestTree {
     private val compare: KeyCompare = { a, b ->
         a[0].compareTo(b[0])
     }
-    private var filePath: String? = null
+    private val keySchema = SchemaBuilder.builder().record("key").fields()
+        .name("key").type().intType().noDefault().endRecord()
+    private val valueSchema = SchemaBuilder.builder().record("value").fields()
+        .name("value").type().stringType().noDefault().endRecord()
+    private var file: File? = null
     private var pageManager: PageManager? = null
     private var tree: Tree? = null
     private val record = Record(byteArrayOf(1), byteArrayOf(1))
 
     @BeforeEach
-    fun init(@TempDir tempDir: Path) {
-        filePath = tempDir.resolve("test.db").toString()
-        pageManager = PageManager(FileManager.new(filePath!!))
+    fun init(@TempDir tempDir: File) {
+        file = tempDir.resolve("test.db")
+        val fileManager = FileManager.new(file!!, keySchema, valueSchema)
+        pageManager = PageManager(fileManager)
         tree = Tree(pageManager!!, compare)
         tree!!.put(record)
     }
@@ -43,7 +49,7 @@ class TestTree {
 
     @Test
     fun `load root-only`() {
-        val loadedPageManager = PageManager(FileManager.load(filePath!!))
+        val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
         assertThat(loadedTree.get(record.key)).isEqualTo(record)
     }
@@ -60,7 +66,7 @@ class TestTree {
         assertThat(scannedReversed).isEqualTo(records.reversed())
         //tree!!.debug()
 
-        val loadedPageManager = PageManager(FileManager.load(filePath!!))
+        val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
         val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
         assertThat(loadedScanned).isEqualTo(records)
@@ -78,7 +84,7 @@ class TestTree {
         assertThat(scannedReversed).isEqualTo(records.reversed())
         //tree!!.debug()
 
-        val loadedPageManager = PageManager(FileManager.load(filePath!!))
+        val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
         val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
         assertThat(loadedScanned).isEqualTo(records)
@@ -96,7 +102,7 @@ class TestTree {
         assertThat(scannedReversed).isEqualTo(records.reversed())
         //tree!!.debug()
 
-        val loadedPageManager = PageManager(FileManager.load(filePath!!))
+        val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
         val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
         assertThat(loadedScanned).isEqualTo(records)

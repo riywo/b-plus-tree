@@ -3,8 +3,6 @@ package com.riywo.ninja.bptree
 import org.apache.avro.Schema
 import org.apache.avro.generic.*
 import org.apache.avro.io.*
-import org.apache.avro.message.*
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
@@ -13,8 +11,16 @@ open class AvroGenericRecord(private val io: IO) : GenericData.Record(io.schema)
         io.decode(this, byteBuffer)
     }
 
+    fun load(json: String) {
+        io.decodeJson(this, json)
+    }
+
     fun toByteBuffer(): ByteBuffer {
         return io.encode(this)
+    }
+
+    fun toJson(): String {
+        return io.encodeJson(this)
     }
 
     class IO(val schema: Schema) {
@@ -27,19 +33,32 @@ open class AvroGenericRecord(private val io: IO) : GenericData.Record(io.schema)
         private val writer = GenericDatumWriter<GenericRecord>(schema)
         private val reader = GenericDatumReader<GenericRecord>(schema)
 
-        private var encoder: BinaryEncoder? = null
-        private var decoder: BinaryDecoder? = null
+        private var binaryEncoder: BinaryEncoder? = null
+        private var binaryDecoder: BinaryDecoder? = null
 
         fun encode(record: AvroGenericRecord): ByteBuffer {
             val output = ByteArrayOutputStream()
-            encoder = EncoderFactory.get().binaryEncoder(output, encoder)
-            writer.write(record, encoder)
-            encoder?.flush()
+            binaryEncoder = EncoderFactory.get().binaryEncoder(output, binaryEncoder)
+            writer.write(record, binaryEncoder)
+            binaryEncoder?.flush()
             return output.toByteArray().toByteBuffer()
         }
 
         fun decode(record: AvroGenericRecord, byteBuffer: ByteBuffer) {
-            decoder = DecoderFactory.get().binaryDecoder(byteBuffer.toByteArray(), decoder)
+            binaryDecoder = DecoderFactory.get().binaryDecoder(byteBuffer.toByteArray(), binaryDecoder)
+            reader.read(record, binaryDecoder)
+        }
+
+        fun encodeJson(record: AvroGenericRecord): String {
+            val output = ByteArrayOutputStream()
+            val encoder = EncoderFactory.get().jsonEncoder(schema, output)
+            writer.write(record, encoder)
+            encoder.flush()
+            return output.toString()
+        }
+
+        fun decodeJson(record: AvroGenericRecord, input: String) {
+            val decoder = DecoderFactory.get().jsonDecoder(schema, input)
             reader.read(record, decoder)
         }
 

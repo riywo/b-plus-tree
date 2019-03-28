@@ -33,18 +33,18 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
     fun delete(record: Record) = delete(record.key)
 
     fun scan(startKey: ByteBuffer, endKey: ByteBuffer): Sequence<Record> {
-        val isAscending = compare(startKey, endKey) == -1
+        val isAscending = compare(startKey, endKey) < 0
         val firstNode = findLeafNode(startKey).leafNode
         return if (isAscending) {
             generateSequence(firstNode) { createLeafNode(it.nextId) }
                 .flatMap { it.records }
-                .dropWhile { compare(it.key, startKey) == -1 } // it < startKey
-                .takeWhile { compare(it.key, endKey) != 1 }    // it <= endKey
+                .dropWhile { compare(it.key, startKey) < 0 } // it < startKey
+                .takeWhile { compare(it.key, endKey) <= 0 }    // it <= endKey
         } else {
             generateSequence(firstNode) { createLeafNode(it.previousId) }
                 .flatMap { it.recordsReversed }
-                .dropWhile { compare(it.key, startKey) == 1 } // it > startKey
-                .takeWhile { compare(it.key, endKey) != -1 }  // it >= endKey
+                .dropWhile { compare(it.key, startKey) > 0 } // it > startKey
+                .takeWhile { compare(it.key, endKey) >= 0 }  // it >= endKey
         }
     }
 

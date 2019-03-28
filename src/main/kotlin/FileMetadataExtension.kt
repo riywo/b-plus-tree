@@ -2,22 +2,25 @@ package com.riywo.ninja.bptree
 
 import FileMetadata
 import kotlin.reflect.KProperty
+import org.apache.avro.Schema
 
-fun createFileMetadata(): FileMetadata {
+fun createFileMetadata(keySchema: Schema, valueSchema: Schema): FileMetadata {
     val builder = FileMetadata.newBuilder()
     builder.nextFreePageId = createPageId(ROOT_PAGE_ID)
+    builder.keySchema = keySchema.toString()
+    builder.valueSchema = valueSchema.toString()
     return builder.build()
 }
 
-val emptyFileMetadata = createFileMetadata()
-
 enum class FileMetadataProperties {
-    NextFreePageId
+    NextFreePageId, KeySchema, ValueSchema
 }
 
 inline operator fun <reified T> FileMetadata.getValue(thisRef: Any, property: KProperty<*>): T {
     return when (FileMetadataProperties.valueOf(property.name.capitalize())) {
         FileMetadataProperties.NextFreePageId -> getNextFreePageId().getInt() as T
+        FileMetadataProperties.KeySchema -> Schema.Parser().parse(getKeySchema()) as T
+        FileMetadataProperties.ValueSchema -> Schema.Parser().parse(getValueSchema()) as T
     }
 }
 

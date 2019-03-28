@@ -5,26 +5,29 @@ import NodeType
 import KeyValue
 import java.io.EOFException
 import java.io.RandomAccessFile
+import java.io.File
 import java.lang.Exception
+import org.apache.avro.*
 
-class FileManager private constructor(filePath: String, initialMetadata: FileMetadata? = null) {
+class FileManager private constructor(file: File, initialMetadata: FileMetadata? = null) {
     companion object {
-        val metadataOffset = emptyFileMetadata.toByteBuffer().limit()
-
-        fun new(filePath: String): FileManager {
-            val fileManager = FileManager(filePath, createFileMetadata())
+        fun new(file: File, keySchema: Schema, valueSchema: Schema): FileManager {
+            val fileManager = FileManager(file, createFileMetadata(keySchema, valueSchema))
             val rootPage = fileManager.allocate(NodeType.LeafNode, mutableListOf())
             fileManager.write(rootPage)
             return fileManager
         }
 
-        fun load(filePath: String) = FileManager(filePath)
+        fun load(file: File) = FileManager(file)
     }
 
-    private val file = RandomAccessFile(filePath, "rws")
+    private val file = RandomAccessFile(file, "rws")
     private val metadata = initialMetadata ?: loadMetadata()
     private val buffer = ByteArray(MAX_PAGE_SIZE)
     val fileSize get() = file.length()
+
+    val keySchema: Schema by metadata
+    val valueSchema: Schema by metadata
     private var nextFreePageId: Int? by metadata
 
     fun allocate(nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {
@@ -56,7 +59,7 @@ class FileManager private constructor(filePath: String, initialMetadata: FileMet
     }
 
     private fun loadMetadata(): FileMetadata {
-        val metadataBuffer = ByteArray(metadataOffset)
+        val metadataBuffer = ByteArray(METADATA_SIZE)
         file.seek(0)
         file.readFully(metadataBuffer)
         return FileMetadata.fromByteBuffer(metadataBuffer.toByteBuffer())
@@ -64,11 +67,13 @@ class FileManager private constructor(filePath: String, initialMetadata: FileMet
 
     private fun writeMetadata() {
         file.seek(0)
-        file.write(metadata.toByteBuffer().toByteArray())
+        val byteBuffer = metadata.toByteBuffer()
+        if (byteBuffer.limit() > METADATA_SIZE) throw Exception() // TODO
+        file.write(byteBuffer.toByteArray())
     }
 
     private fun seek(id: Int) {
-        val pos = id * MAX_PAGE_SIZE + metadataOffset
+        val pos = id * MAX_PAGE_SIZE + METADATA_SIZE
         file.seek(pos.toLong())
     }
 }

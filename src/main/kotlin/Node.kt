@@ -101,9 +101,10 @@ abstract class Node(
         val keyBytes = keyByteBuffer.toByteArray()
         page.records.forEachIndexed { index, keyValue ->
             val bytes = keyValue.getKey().toByteArray()
-            when(compare(bytes, keyBytes)) {
-                0 -> return FindResult.ExactMatch(index, keyValue.getValue())
-                1 -> return FindResult.FirstGraterThanMatch(index)
+            val compared = compare(bytes, keyBytes)
+            when {
+                compared == 0 -> return FindResult.ExactMatch(index, keyValue.getValue())
+                compared >  0 -> return FindResult.FirstGraterThanMatch(index)
             }
         }
         return FindResult.FirstGraterThanMatch(recordsSize)

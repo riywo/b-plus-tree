@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+./gradlew --quiet installDist
+./build/install/b-plus-tree/bin/b-plus-tree "$@"

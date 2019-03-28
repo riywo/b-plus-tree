@@ -2,6 +2,8 @@
   "name": "FileMetadata",
   "type": "record",
   "fields": [
+    {"name": "keySchema", "type": "string"},
+    {"name": "valueSchema", "type": "string"},
     {"name": "nextFreePageId", "type": "PageId"}
   ]
 }

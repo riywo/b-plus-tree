@@ -1,23 +1,26 @@
 package com.riywo.ninja.bptree
 
+import java.io.File
+import org.apache.avro.SchemaBuilder
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.io.*
 import org.assertj.core.api.Assertions.*
-import java.nio.file.Path
 
 class TestFileManager {
     private val page1 = Page.new(1, NodeType.LeafNode, mutableListOf())
     private val page100 = Page.new(100, NodeType.LeafNode, mutableListOf())
+    private val keySchema = SchemaBuilder.builder().record("key").fields()
+        .name("key").type().intType().noDefault().endRecord()
+    private val valueSchema = SchemaBuilder.builder().record("value").fields()
+        .name("value").type().stringType().noDefault().endRecord()
     private var fileManager: FileManager? = null
 
     @BeforeEach
-    fun init(@TempDir tempDir: Path) {
+    fun init(@TempDir tempDir: File) {
         val file = tempDir.resolve("test.db")
-        fileManager = FileManager.new(file.toString())
+        fileManager = FileManager.new(file, keySchema, valueSchema)
         fileManager!!.write(page1)
-        assertThat(fileManager!!.fileSize.toInt()).isEqualTo(MAX_PAGE_SIZE*2 + emptyFileMetadata.toByteBuffer().limit())
         fileManager!!.write(page100)
-        assertThat(fileManager!!.fileSize.toInt()).isEqualTo(MAX_PAGE_SIZE*101 + emptyFileMetadata.toByteBuffer().limit())
     }
 
     @Test

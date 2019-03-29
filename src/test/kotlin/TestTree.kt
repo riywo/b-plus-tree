@@ -11,7 +11,6 @@ class TestTree {
     private val compare: KeyCompare = { a, b ->
         a[0].toUInt().compareTo(b[0].toUInt())
     }
-    private val minimumKey = byteArrayOf(0).toByteBuffer()
     private val keySchema = SchemaBuilder.builder().record("key").fields()
         .name("key").type().intType().noDefault().endRecord()
     private val valueSchema = SchemaBuilder.builder().record("value").fields()
@@ -26,7 +25,7 @@ class TestTree {
         file = tempDir.resolve("test.db")
         val fileManager = FileManager.new(file!!, keySchema, valueSchema)
         pageManager = PageManager(fileManager)
-        tree = Tree(pageManager!!, compare, minimumKey)
+        tree = Tree(pageManager!!, compare)
     }
 
     @Test
@@ -54,7 +53,7 @@ class TestTree {
     fun `load root-only`() {
         tree!!.put(record)
         val loadedPageManager = PageManager(FileManager.load(file!!))
-        val loadedTree = Tree(loadedPageManager, compare, minimumKey)
+        val loadedTree = Tree(loadedPageManager, compare)
         assertThat(loadedTree.get(record.key)).isEqualTo(record)
     }
 
@@ -71,7 +70,7 @@ class TestTree {
         tree!!.debug()
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
-        val loadedTree = Tree(loadedPageManager, compare, minimumKey)
+        val loadedTree = Tree(loadedPageManager, compare)
         val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
         assertThat(loadedScanned).isEqualTo(records)
     }
@@ -89,7 +88,7 @@ class TestTree {
         tree!!.debug()
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
-        val loadedTree = Tree(loadedPageManager, compare, minimumKey)
+        val loadedTree = Tree(loadedPageManager, compare)
         val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
         assertThat(loadedScanned).isEqualTo(records)
     }
@@ -107,7 +106,7 @@ class TestTree {
         tree!!.debug()
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
-        val loadedTree = Tree(loadedPageManager, compare, minimumKey)
+        val loadedTree = Tree(loadedPageManager, compare)
         val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
         assertThat(loadedScanned).isEqualTo(records)
     }

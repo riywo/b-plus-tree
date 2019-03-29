@@ -13,7 +13,7 @@ class Main(file: File) {
     private val fileManager = FileManager.load(file)
     private val pageManager = PageManager(fileManager)
     private val table = Table(fileManager.keySchema, fileManager.valueSchema)
-    private val tree = Tree(pageManager, table.key::compare, table.minimumKey.toByteBuffer())
+    private val tree = Tree(pageManager, table.key::compare)
     private val reader = LineReaderBuilder.builder().build()
 
     init {

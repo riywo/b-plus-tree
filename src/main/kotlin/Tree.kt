@@ -3,7 +3,7 @@ package com.riywo.ninja.bptree
 import java.lang.Exception
 import java.nio.ByteBuffer
 
-class Tree(private val pageManager: PageManager, private val compare: KeyCompare) {
+class Tree(private val pageManager: PageManager, private val compare: KeyCompare, private val minimumKey: ByteBuffer) {
     private val rootNode: RootNode = RootNode(pageManager.getRootPage(), compare)
     private fun compare(a: ByteBuffer, b: ByteBuffer) = compare(a.toByteArray(), b.toByteArray())
 
@@ -98,7 +98,7 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
             NodeType.RootNode -> Pair(InternalNode(leftPage, compare), InternalNode(rightPage, compare))
             else -> throw Exception() // TODO
         }
-        rootNode.addChildNode(leftNode)
+        rootNode.addChildNode(leftNode, minimumKey)
         rootNode.addChildNode(rightNode)
         rootNode.type = NodeType.RootNode
         leftNode.commit(pageManager)

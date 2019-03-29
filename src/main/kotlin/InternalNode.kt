@@ -39,8 +39,7 @@ open class InternalNode(page: Page, compare: KeyCompare) : LeafNode(page, compar
         }
     }
 
-    fun addChildNode(node: Node) {
-        val minKey = node.minRecord.key
+    fun addChildNode(node: Node, minKey: ByteBuffer = node.minRecord.key) {
         val childPageId = encodeChildPageId(node.id)
         put(minKey, childPageId)
     }

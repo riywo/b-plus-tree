@@ -11,10 +11,6 @@ class TestTree {
     private val compare: KeyCompare = { a, b ->
         a.toByteBuffer().short.compareTo(b.toByteBuffer().short)
     }
-    private val keySchema = SchemaBuilder.builder().record("key").fields()
-        .name("key").type().intType().noDefault().endRecord()
-    private val valueSchema = SchemaBuilder.builder().record("value").fields()
-        .name("value").type().stringType().noDefault().endRecord()
     private var file: File? = null
     private var pageManager: PageManager? = null
     private var tree: Tree? = null
@@ -27,7 +23,7 @@ class TestTree {
     @BeforeEach
     fun init(@TempDir tempDir: File) {
         file = tempDir.resolve("test.db")
-        val fileManager = FileManager.new(file!!, keySchema, valueSchema)
+        val fileManager = FileManager.new(file!!)
         pageManager = PageManager(fileManager)
         tree = Tree(pageManager!!, compare)
     }

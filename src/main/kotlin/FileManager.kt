@@ -11,8 +11,8 @@ import org.apache.avro.*
 
 class FileManager private constructor(file: File, initialMetadata: FileMetadata? = null) {
     companion object {
-        fun new(file: File, keySchema: Schema, valueSchema: Schema): FileManager {
-            val fileManager = FileManager(file, createFileMetadata(keySchema, valueSchema))
+        fun new(file: File): FileManager {
+            val fileManager = FileManager(file, createFileMetadata())
             val rootPage = fileManager.allocate(NodeType.LeafNode, mutableListOf())
             fileManager.write(rootPage)
             return fileManager
@@ -24,10 +24,7 @@ class FileManager private constructor(file: File, initialMetadata: FileMetadata?
     private val file = RandomAccessFile(file, "rws")
     private val metadata = initialMetadata ?: loadMetadata()
     private val buffer = ByteArray(MAX_PAGE_SIZE)
-    val fileSize get() = file.length()
 
-    val keySchema: Schema by metadata
-    val valueSchema: Schema by metadata
     private var nextFreePageId: Int? by metadata
 
     fun allocate(nodeType: NodeType, initialRecords: MutableList<KeyValue>): Page {

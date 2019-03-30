@@ -9,10 +9,10 @@ import org.apache.avro.Schema
 import org.jline.reader.*
 import java.lang.Exception
 
-class Main(file: File) {
+class Main(file: File, keySchema: Schema, valueSchema: Schema) {
     private val fileManager = FileManager.load(file)
     private val pageManager = PageManager(fileManager)
-    private val table = Table(fileManager.keySchema, fileManager.valueSchema)
+    private val table = Table(keySchema, valueSchema)
     private val tree = Tree(pageManager, table.key::compare)
     private val reader = LineReaderBuilder.builder().build()
 
@@ -99,29 +99,28 @@ class CLI : CliktCommand() {
 
     class Init : CliktCommand() {
         private val filePath by argument()
-        private val keySchemaPath by option().default("sample/keySchema.avsc")
-        private val valueSchemaPath by option().default("sample/valueSchema.avsc")
 
         override fun run() {
             val file = File(filePath)
             if (file.exists()) {
                 throw BadParameterValue("$filePath already exists.")
             } else {
-                val keySchema = Schema.Parser().parse(File(keySchemaPath))
-                val valueSchema = Schema.Parser().parse(File(valueSchemaPath))
-                val table = Table(keySchema, valueSchema)
-                FileManager.new(file, keySchema, valueSchema)
+                FileManager.new(file)
             }
         }
     }
 
     class Open : CliktCommand() {
         private val filePath by argument()
+        private val keySchemaPath by option().default("sample/keySchema.avsc")
+        private val valueSchemaPath by option().default("sample/valueSchema.avsc")
 
         override fun run() {
             val file = File(filePath)
+            val keySchema = Schema.Parser().parse(File(keySchemaPath))
+            val valueSchema = Schema.Parser().parse(File(valueSchemaPath))
             if (file.exists()) {
-                val main = Main(file)
+                val main = Main(file, keySchema, valueSchema)
                 main.run()
             } else {
                 throw BadParameterValue("$filePath doesn't exist.")

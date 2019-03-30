@@ -7,4 +7,4 @@ const val AVRO_PAGE_ID_NULL_VALUE = -1
 
 const val MAX_PAGE_SIZE = 256
 const val ROOT_PAGE_ID = 0
-const val METADATA_SIZE = 512
+const val METADATA_SIZE = 128

@@ -84,6 +84,8 @@ This is a class for B+Tree itself. It supports the operations below:
         - Add the new LeafNode to the same parent
     4. If any InternalNode is also full, split it
         - Add the new InternalNode to the same parent
+    5. If RootNode is full, split it
+        - Add new Nodes as children, left node's minimum key is logical minimum key (0 bytes)
 - delete(key)
     1. Find appropriate LeafNode
     2. Delete KeyValue from the LeafNode and sync with the file
@@ -183,10 +185,9 @@ This class is for managing Page lifecycle. It has memory pool for pages (current
     5. Write to the file
 
 ## Not optimized split
-Currently, there is only one split strategy: middle of size. This is the best approach for random insert since a new KeyValue comes random place.
+Currently, there is only one split strategy: middle of size. This is the best approach for random insert since a new KeyValue comes random place and half split pages could be filled.
 
-However, if the insert is in order (ascending), it is not optimized. Because a new KeyValue is always inserted to the right side, all nodes are left with half usage.
+However, if the insert is in order (both ascending and descending), it is not optimized. Because a new KeyValue is always inserted to one node, rest of nodes are left with half usage.
 
-Also, the current logic is not optimized for the left-edge Node. 
-
+InnoDB has an optimization to solve this problem. See this post.
 

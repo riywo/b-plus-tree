@@ -9,7 +9,7 @@ import java.io.File
 
 class TestTree {
     private val compare: KeyCompare = { a, b ->
-        a[0].toUInt().compareTo(b[0].toUInt())
+        a.toByteBuffer().short.compareTo(b.toByteBuffer().short)
     }
     private val keySchema = SchemaBuilder.builder().record("key").fields()
         .name("key").type().intType().noDefault().endRecord()
@@ -18,7 +18,11 @@ class TestTree {
     private var file: File? = null
     private var pageManager: PageManager? = null
     private var tree: Tree? = null
-    private val record = Record(byteArrayOf(1), byteArrayOf(1))
+    private val record = Record(makeKey(1), byteArrayOf(1))
+
+    private fun makeKey(i: Int): ByteArray {
+        return ByteBuffer.allocate(2).putShort(i.toShort()).toByteArray()
+    }
 
     @BeforeEach
     fun init(@TempDir tempDir: File) {
@@ -59,7 +63,7 @@ class TestTree {
 
     @Test
     fun `insert ordered`() {
-        val records = (1..250).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
+        val records = (1..10000).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records) {
             tree!!.put(newRecord)
         }
@@ -77,7 +81,7 @@ class TestTree {
 
     @Test
     fun `insert reversed ordered`() {
-        val records = (1..250).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
+        val records = (1..10000).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records.reversed()) {
             tree!!.put(newRecord)
         }
@@ -95,7 +99,7 @@ class TestTree {
 
     @Test
     fun `insert shuffled ordered`() {
-        val records = (1..250).map { Record(byteArrayOf(it.toByte()), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
+        val records = (1..10000).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records.shuffled()) {
             tree!!.put(newRecord)
         }

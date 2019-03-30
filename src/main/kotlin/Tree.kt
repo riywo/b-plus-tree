@@ -88,7 +88,6 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
         } else {
             splitRootNode()
         }
-        debug()
     }
 
     private fun splitRootNode() {

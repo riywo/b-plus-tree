@@ -21,10 +21,6 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.github.ajalt:clikt:1.7.0")
     compile("org.apache.avro:avro:1.8.2")
-    compile("org.slf4j:slf4j-api:1.7.26")
-    compile("ch.qos.logback:logback-core:1.2.3")
-    compile("ch.qos.logback:logback-classic:1.2.3")
-    compile("io.github.microutils:kotlin-logging:1.6.24")
     compile("org.jline:jline:3.10.0")
 
     testCompile("org.junit.jupiter:junit-jupiter-api:5.4.0")

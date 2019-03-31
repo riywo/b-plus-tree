@@ -5,8 +5,6 @@ import NodeType
 import KeyValue
 import java.nio.ByteBuffer
 
-private val logger = mu.KotlinLogging.logger {}
-
 class Page private constructor(
     private val data: PageData
 ) {

@@ -94,6 +94,7 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
                 NodeType.InternalNode -> InternalNode(node.split(pageManager), compare)
                 else -> throw Exception() // TODO
             }
+            newNode.commit(pageManager)
             try {
                 parent.addChildNode(newNode)
                 parent.commit(pageManager)

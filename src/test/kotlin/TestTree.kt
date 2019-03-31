@@ -59,7 +59,7 @@ class TestTree {
 
     @Test
     fun `insert ordered`() {
-        val records = (1..10000).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
+        val records = (1..50).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records) {
             tree!!.put(newRecord)
         }
@@ -77,7 +77,7 @@ class TestTree {
 
     @Test
     fun `insert reversed ordered`() {
-        val records = (1..10000).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
+        val records = (1..50).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records.reversed()) {
             tree!!.put(newRecord)
         }
@@ -95,7 +95,7 @@ class TestTree {
 
     @Test
     fun `insert shuffled ordered`() {
-        val records = (1..10000).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
+        val records = (1..50).map { Record(makeKey(it), ByteBuffer.allocate(MAX_PAGE_SIZE/6)) }
         for (newRecord in records.shuffled()) {
             tree!!.put(newRecord)
         }

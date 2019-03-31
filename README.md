@@ -16,16 +16,16 @@ I stopped here since I had learned a lot. The list below is lots of TODO:
 - etc.
 
 ## Schema
-This B+Tree implementation is mostly generic/schema free. You can use any byte array representation for key/value, but I use Apache Avro for demo purpose since it is sortable even in byte array form (i.e. without decoding)
+This B+Tree implementation is mostly generic/schema free. You can use any byte array representation for key and value, but I use Apache Avro for demo purpose since it is sortable even in byte array form (i.e. without decoding)
 
 ## Demo
-First, initialize the db file: (The default schema is under `/sample` directory)
+First, initialize the db file:
 
 ```
 $ ./runsample init foo.db
 ```
 
-Then, you can `get/put/delete/scan` the B+Tree:
+Then, you can `get/put/delete/scan` the B+Tree (The default schema is under `/sample` directory):
 
 ```
 $ ./runsample open foo.db

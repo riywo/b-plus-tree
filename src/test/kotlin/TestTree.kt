@@ -63,7 +63,7 @@ class TestTree {
         for (newRecord in records) {
             tree!!.put(newRecord)
         }
-        val scanned = tree!!.scan(records.first().key, records.last().key).toList()
+        val scanned = tree!!.scan().toList()
         assertThat(scanned).isEqualTo(records)
         val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
@@ -71,7 +71,7 @@ class TestTree {
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
-        val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
+        val loadedScanned = loadedTree.scan().toList()
         assertThat(loadedScanned).isEqualTo(records)
     }
 
@@ -81,7 +81,7 @@ class TestTree {
         for (newRecord in records.reversed()) {
             tree!!.put(newRecord)
         }
-        val scanned = tree!!.scan(records.first().key, records.last().key).toList()
+        val scanned = tree!!.scan().toList()
         assertThat(scanned).isEqualTo(records)
         val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
@@ -89,7 +89,7 @@ class TestTree {
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
-        val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
+        val loadedScanned = loadedTree.scan().toList()
         assertThat(loadedScanned).isEqualTo(records)
     }
 
@@ -99,7 +99,7 @@ class TestTree {
         for (newRecord in records.shuffled()) {
             tree!!.put(newRecord)
         }
-        val scanned = tree!!.scan(records.first().key, records.last().key).toList()
+        val scanned = tree!!.scan().toList()
         assertThat(scanned).isEqualTo(records)
         val scannedReversed = tree!!.scan(records.last().key, records.first().key).toList()
         assertThat(scannedReversed).isEqualTo(records.reversed())
@@ -107,7 +107,7 @@ class TestTree {
 
         val loadedPageManager = PageManager(FileManager.load(file!!))
         val loadedTree = Tree(loadedPageManager, compare)
-        val loadedScanned = loadedTree.scan(records.first().key, records.last().key).toList()
+        val loadedScanned = loadedTree.scan().toList()
         assertThat(loadedScanned).isEqualTo(records)
     }
 }

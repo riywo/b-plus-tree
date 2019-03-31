@@ -100,9 +100,9 @@ abstract class Node(
         if (page.records.isEmpty()) return null
         val keyBytes = keyByteBuffer.toByteArray()
         for ((index, keyValue) in page.records.withIndex()) {
-            val bytes = keyValue.getKey().toByteArray()
-            if (bytes.isEmpty()) continue // Logical minimum value never matches
-            val compared = compare(bytes, keyBytes)
+            val key = keyValue.getKey()
+            if (key == Tree.logicalMinimumKey) continue
+            val compared = compare(key.toByteArray(), keyBytes)
             when {
                 compared == 0 -> return FindResult.ExactMatch(index, keyValue.getValue())
                 compared >  0 -> return FindResult.FirstGraterThanMatch(index)

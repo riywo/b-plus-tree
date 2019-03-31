@@ -39,6 +39,14 @@ open class InternalNode(page: Page, compare: KeyCompare) : LeafNode(page, compar
         }
     }
 
+    fun firstChildPageId(): Int {
+        return decodeChildPageId(records.first().value)
+    }
+
+    fun lastChildPageId(): Int {
+        return decodeChildPageId(records.last().value)
+    }
+
     fun addChildNode(node: Node, minKey: ByteBuffer = node.minRecord.key) {
         val childPageId = encodeChildPageId(node.id)
         put(minKey, childPageId)

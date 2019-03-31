@@ -4,6 +4,11 @@ import java.lang.Exception
 import java.nio.ByteBuffer
 
 class Tree(private val pageManager: PageManager, private val compare: KeyCompare) {
+    companion object {
+        val logicalMinimumKey = byteArrayOf().toByteBuffer()
+        val logicalMaximumKey = null
+    }
+
     private val rootNode: RootNode = RootNode(pageManager.getRootPage(), compare)
     private fun compare(a: ByteBuffer, b: ByteBuffer) = compare(a.toByteArray(), b.toByteArray())
 
@@ -32,21 +37,27 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
     fun put(record: Record) = put(record.key, record.value)
     fun delete(record: Record) = delete(record.key)
 
-    fun scan(startKey: ByteBuffer, endKey: ByteBuffer): Sequence<Record> {
-        val isAscending = compare(startKey, endKey) < 0
+    fun scan(startKey: ByteBuffer? = logicalMinimumKey, endKey: ByteBuffer? = logicalMaximumKey): Sequence<Record> {
+        if (startKey == endKey) return sequenceOf()
+        val isAscending = when {
+            startKey == logicalMinimumKey -> true
+            startKey == logicalMaximumKey -> false
+            endKey == logicalMinimumKey -> false
+            endKey == logicalMaximumKey -> true
+            else -> compare(startKey, endKey) < 0
+        }
         val firstNode = findLeafNode(startKey).leafNode
         val lastNode = findLeafNode(endKey).leafNode
-
         return if (isAscending) {
             generateSequence(firstNode) { if(it == lastNode) null else createLeafNode(it.nextId) }
                 .flatMap { it.records }
-                .dropWhile { compare(it.key, startKey) < 0 } // it < startKey
-                .takeWhile { compare(it.key, endKey) <= 0 }    // it <= endKey
+                .dropWhile { startKey != logicalMinimumKey && compare(it.key, startKey!!) < 0 } // it < startKey
+                .takeWhile { endKey == logicalMaximumKey || compare(it.key, endKey) <= 0 }    // it <= endKey
         } else {
             generateSequence(firstNode) { if(it == lastNode) null else createLeafNode(it.previousId) }
                 .flatMap { it.recordsReversed }
-                .dropWhile { compare(it.key, startKey) > 0 } // it > startKey
-                .takeWhile { compare(it.key, endKey) >= 0 }  // it >= endKey
+                .dropWhile { startKey != logicalMaximumKey && compare(it.key, startKey) > 0 } // it > startKey
+                .takeWhile { endKey == logicalMinimumKey || compare(it.key, endKey!!) >= 0 }  // it >= endKey
         }
     }
 
@@ -58,11 +69,15 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
     private data class FindResult(val leafNode: LeafNode, val pathFromRoot: List<InternalNode>)
 
     private fun findLeafNode(
-        key: ByteBuffer,
+        key: ByteBuffer?,
         parentNode: InternalNode = rootNode, pathFromRoot: List<InternalNode> = listOf()): FindResult {
         if (parentNode.isLeafNode()) return FindResult(parentNode, pathFromRoot) // No root yet
         val newPathFromRoot = pathFromRoot + parentNode
-        val childPageId = parentNode.findChildPageId(key)
+        val childPageId = when(key) {
+            logicalMinimumKey -> parentNode.firstChildPageId()
+            logicalMaximumKey -> parentNode.lastChildPageId()
+            else -> parentNode.findChildPageId(key)
+        }
         val childPage = pageManager.get(childPageId) ?: throw Exception() // TODO
         return when (childPage.nodeType) {
             NodeType.LeafNode -> FindResult(LeafNode(childPage, compare), newPathFromRoot)
@@ -97,7 +112,7 @@ class Tree(private val pageManager: PageManager, private val compare: KeyCompare
             NodeType.RootNode -> Pair(InternalNode(leftPage, compare), InternalNode(rightPage, compare))
             else -> throw Exception() // TODO
         }
-        rootNode.addChildNode(leftNode, byteArrayOf().toByteBuffer()) // Logical minimum key
+        rootNode.addChildNode(leftNode, logicalMinimumKey)
         rootNode.addChildNode(rightNode)
         rootNode.type = NodeType.RootNode
         leftNode.commit(pageManager)

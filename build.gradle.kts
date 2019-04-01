@@ -41,3 +41,6 @@ tasks.withType<Test> {
     )
 }
 
+license {
+    header = file("LICENSE-HEADER")
+}

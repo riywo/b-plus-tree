@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.3.21"
     id("com.commercehub.gradle.plugin.avro") version "0.16.0"
+    id("com.github.hierynomus.license") version "0.15.0"
     application
 }
 
@@ -39,3 +40,4 @@ tasks.withType<Test> {
         "junit.jupiter.testinstance.lifecycle.default" to "per_class"
     )
 }
+
